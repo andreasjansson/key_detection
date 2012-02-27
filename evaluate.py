@@ -1,4 +1,7 @@
 class Evaluator:
+    """
+    Evaluate the effectiveness of a key detection algortihm.
+    """
 
     def evaluate(self, keys, true_keys, time_window = 1):
 

@@ -1,9 +1,8 @@
-from subprocess import call
 import tempfile
 import scipy.io.wavfile as wavfile
 import scipy.signal as signal
+import numpy as np
 import os
-from itertools import repeat
 
 class Key:
     def __init__(self, key, time):
@@ -22,19 +21,29 @@ class Algorithm:
 
 
 class Mp3Reader:
-    
-    def read_mono(self, mp3_filename):
-        wav_filename = tempfile.NamedTemporaryFile('w+b', -1, '.wav', 'tmp', None, False)
+
+    def read(self, mp3_filename):
+        """
+        Returns (sampling_rate, data), where the sampling rate is the
+        original sampling rate, downsampled by a factor of 4, and
+        the data signal is a downsampled, mono (left channel) version
+        of the original signal.
+        """
+        wav_filename = tempfile.NamedTemporaryFile(suffix = '.wav', delete = False).name
         self._mp3_to_wav(mp3_filename, wav_filename)
         samp_rate, stereo = wavfile.read(wav_filename)
         os.unlink(wav_filename)
-        mono = stereo[:,0] + stereo[:,1]
+        mono = stereo[:,0]
         # pad with zeroes before downsampling
-        mono = mono + repeat(0, 4 - (len(mono) % 4))
+        mono = np.concatenate((mono, [0] * (4 - (len(mono) % 4))))
         # downsample
-        mono = signal.resample(mono, len(mono) / 4)
-        return (samp_rate / 4, mono)
+        downsample_factor = 4
+        mono = signal.resample(mono, len(mono) / downsample_factor)
+        return (samp_rate / downsample_factor, mono)
         
     def _mp3_to_wav(self, mp3_filename, wav_filename):
-        # TODO: UPNEXT
-        pass
+        if not os.path.exists(mp3_filename):
+            raise IOError('File not found')
+        os.system("mpg123 -w " + wav_filename + " " + mp3_filename + " &> /dev/null")
+        if not os.path.exists(wav_filename):
+            raise IOError('Failed to create wav file')

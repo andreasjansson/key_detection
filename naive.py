@@ -1,5 +1,5 @@
 from util import *
-from numpy.fft import fft
+from scipy import fft
 
 class Naive(Algorithm):
     """
@@ -15,14 +15,15 @@ class Naive(Algorithm):
         windows = ceil(len(self.audio) / window_size)
         for i in range(len(spectra)):
             spectrum = self._get_spectrum(i)
+            chromagram = Chromagram(spectrum, self.samp_rate)
             time = i * self.window_size
-            key = self.template.match(spectrum)
+            key = self.template.match(chromagram)
             this.keys.append(Key(key, time))
         return this.keys
 
     def _get_spectrum(self, index):
         start = index * self.window_size
         end = min((index + 1) * self.window_size, len(self.audio))
-        spectrum = fft(self.audio[start:end])
+        spectrum = abs(fft(self.audio[start:end]))[0:len(signal) / 2]
         return spectrum
 

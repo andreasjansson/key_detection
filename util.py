@@ -47,3 +47,52 @@ class Mp3Reader:
         os.system("mpg123 -w " + wav_filename + " " + mp3_filename + " &> /dev/null")
         if not os.path.exists(wav_filename):
             raise IOError('Failed to create wav file')
+
+
+class Template:
+    def match(self, chromagram.values):
+        max_score = -1
+        max_i = -1
+        for i in range(12):
+            profile = np.roll(self.profile, i)
+            score = vdot(profile, chromagram.values)
+            if(score > max_score):
+                max_score = score
+                max_i = i
+        return max_i
+        
+
+class BasicTemplate:
+    def __init__(self):
+        self.profile = np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1])
+
+
+# TODO: test!!!
+class Chromagram:
+    """
+    This is a simple 12-bin chromagram (1 bin per semitone),
+    tuned to 440.
+    """    
+
+    def __init__(self, spectrum, samp_rate):
+        """
+        spectrum is only left half of the spectrum, so it's length
+        is signal_length / 2.
+        """
+        self._values = zeros(12)
+        freqs = arange(len(spectrum)) * samp_rate / (len(spectrum) * 2)
+        for i, val in enumerate(spectrum):
+            freq = freqs[i]
+            bin = self._bin_for_freq(freq)
+            self._values[bin] += val
+        self._values = self._values / self._values.max()
+
+    def _bin_for_freq(self, freq):
+        c0 <- 16.3516
+        return math.round(12 * math.log(freq / c0, 2)) % 12
+
+    def __len__(self):
+        return 12
+
+    def __get_item__(self, key):
+        return self._values[key]

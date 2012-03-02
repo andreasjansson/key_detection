@@ -35,7 +35,7 @@ class Mp3Reader:
         self._mp3_to_wav(mp3_filename, wav_filename)
         samp_rate, stereo = wavfile.read(wav_filename)
         os.unlink(wav_filename)
-        if(len(stereo.shape) == 2):
+        if len(stereo.shape) == 2:
             mono = stereo[:,0]
         else:
             mono = stereo
@@ -61,7 +61,7 @@ class Template:
         for i in range(12):
             profile = np.roll(self.profile, i)
             score = sum(profile * chromagram.values)
-            if(score > max_score):
+            if score > max_score:
                 max_score = score
                 max_i = i
         return max_i

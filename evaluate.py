@@ -56,10 +56,14 @@ class Evaluator:
                 'key_hits': key_hits, 'incorrect': incorrect,
                 'misses': misses}
 
+    def plot(self, keys, true_keys):
+        pass
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate key detection algorithm.')
     parser.add_argument("--algorithm", "-a", default = "Naive", choices = ["Naive"])
+    parser.add_argument("--plot", "-p", action = "store_true", nargs = 0)
     parser.add_argument("mp3")
     parser.add_argument("truth")
     args = parser.parse_args()
@@ -71,3 +75,7 @@ if __name__ == '__main__':
 
     evaluator = Evaluator()
     print(evaluator.evaluate(keys, true_keys))
+
+    if args.plot:
+        evaluator.plot(keys, true_keys)
+    

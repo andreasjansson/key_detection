@@ -1,3 +1,7 @@
+from naive import Naive
+from util import *
+import argparse
+
 class Evaluator:
     """
     Evaluate the effectiveness of a key detection algortihm.
@@ -51,3 +55,19 @@ class Evaluator:
         return {'real_hits': real_hits, 'trans_hits': trans_hits,
                 'key_hits': key_hits, 'incorrect': incorrect,
                 'misses': misses}
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Evaluate key detection algorithm.')
+    parser.add_argument("--algorithm", "-a", default = "Naive", choices = ["Naive"])
+    parser.add_argument("mp3")
+    parser.add_argument("truth")
+    args = parser.parse_args()
+
+    algorithm = globals()[args.algorithm](args.mp3)
+    keys = algorithm.execute()
+    parser = LabParser()
+    true_keys = parser.parse_keys(args.truth)
+
+    evaluator = Evaluator()
+    print(evaluator.evaluate(keys, true_keys))

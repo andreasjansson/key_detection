@@ -4,6 +4,7 @@ import scipy.signal as signal
 import numpy as np
 import math
 import os
+import csv
 
 class Key:
     def __init__(self, key, time):
@@ -14,7 +15,7 @@ class Key:
 class Algorithm:
 
     def __init__(self, mp3_file):
-        self.samp_rate, self.audio = Mp3Reader().read_mono(mp3_file)
+        self.samp_rate, self.audio = Mp3Reader().read(mp3_file)
         self.keys = []
 
     def execute(self):
@@ -94,3 +95,20 @@ class Chromagram:
     def _bin_for_freq(self, freq):
         c0 = 16.3516
         return round(12 * math.log(freq / c0, 2)) % 12
+
+
+class LabParser:
+
+    def parse_keys(self, filename):
+        handle = open(filename, 'r')
+        reader = csv.reader(handle, dialect = "excel-tab")
+        keys = []
+        for row in reader:
+            if len(row) == 4:
+                key = row[3]
+            else:
+                key = None
+            time = float(row[0])
+            keys.append(Key(key, time))
+        handle.close()
+        return keys

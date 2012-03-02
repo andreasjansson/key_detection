@@ -2,6 +2,7 @@ import tempfile
 import scipy.io.wavfile as wavfile
 import scipy.signal as signal
 import numpy as np
+import math
 import os
 
 class Key:
@@ -33,7 +34,10 @@ class Mp3Reader:
         self._mp3_to_wav(mp3_filename, wav_filename)
         samp_rate, stereo = wavfile.read(wav_filename)
         os.unlink(wav_filename)
-        mono = stereo[:,0]
+        if(len(stereo.shape) == 2):
+            mono = stereo[:,0]
+        else:
+            mono = stereo
         # pad with zeroes before downsampling
         mono = np.concatenate((mono, [0] * (4 - (len(mono) % 4))))
         # downsample
@@ -50,19 +54,19 @@ class Mp3Reader:
 
 
 class Template:
-    def match(self, chromagram.values):
+    def match(self, chromagram):
         max_score = -1
         max_i = -1
         for i in range(12):
             profile = np.roll(self.profile, i)
-            score = vdot(profile, chromagram.values)
+            score = sum(profile * chromagram.values)
             if(score > max_score):
                 max_score = score
                 max_i = i
         return max_i
         
 
-class BasicTemplate:
+class BasicTemplate(Template):
     def __init__(self):
         self.profile = np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1])
 
@@ -73,26 +77,20 @@ class Chromagram:
     This is a simple 12-bin chromagram (1 bin per semitone),
     tuned to 440.
     """    
-
     def __init__(self, spectrum, samp_rate):
         """
-        spectrum is only left half of the spectrum, so it's length
+        spectrum is only left half of the spectrum, so its length
         is signal_length / 2.
         """
-        self._values = zeros(12)
-        freqs = arange(len(spectrum)) * samp_rate / (len(spectrum) * 2)
+        self.values = np.zeros(12)
+        freqs = np.arange(len(spectrum)) * samp_rate / (len(spectrum) * 2)
         for i, val in enumerate(spectrum):
             freq = freqs[i]
-            bin = self._bin_for_freq(freq)
-            self._values[bin] += val
-        self._values = self._values / self._values.max()
+            if freq > 0: # disregard dc offset
+                bin = self._bin_for_freq(freq)
+                self.values[bin] += val
+        self.values = self.values / self.values.max()
 
     def _bin_for_freq(self, freq):
-        c0 <- 16.3516
-        return math.round(12 * math.log(freq / c0, 2)) % 12
-
-    def __len__(self):
-        return 12
-
-    def __get_item__(self, key):
-        return self._values[key]
+        c0 = 16.3516
+        return round(12 * math.log(freq / c0, 2)) % 12

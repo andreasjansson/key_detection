@@ -11,11 +11,14 @@ class Key:
         self.key = key
         self.time = time
 
+    def __str__(self):
+        return "{0}: {1}".format(self.time, self.key)
+
 
 class Algorithm:
 
-    def __init__(self, mp3_file):
-        self.samp_rate, self.audio = Mp3Reader().read(mp3_file)
+    def __init__(self, mp3_file, length):
+        self.samp_rate, self.audio = Mp3Reader().read(mp3_file, length)
         self.keys = []
 
     def execute(self):
@@ -24,7 +27,7 @@ class Algorithm:
 
 class Mp3Reader:
 
-    def read(self, mp3_filename):
+    def read(self, mp3_filename, length = None):
         """
         Returns (sampling_rate, data), where the sampling rate is the
         original sampling rate, downsampled by a factor of 4, and
@@ -35,10 +38,15 @@ class Mp3Reader:
         self._mp3_to_wav(mp3_filename, wav_filename)
         samp_rate, stereo = wavfile.read(wav_filename)
         os.unlink(wav_filename)
+
         if len(stereo.shape) == 2:
             mono = stereo[:,0]
         else:
             mono = stereo
+
+        if length and len(mono) / samp_rate > length:
+            mono = mono[0:int(length * samp_rate)]
+
         # pad with zeroes before downsampling
         mono = np.concatenate((mono, [0] * (4 - (len(mono) % 4))))
         # downsample
@@ -97,18 +105,27 @@ class Chromagram:
         return round(12 * math.log(freq / c0, 2)) % 12
 
 
+simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
+                 'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,
+                 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11,
+                 'C:minor': 3, 'C#:minor': 4, 'Db:minor': 4, 'D:minor': 5, 'D#:minor': 6, 'Eb:minor': 6,
+                 'E:minor': 7, 'F:minor': 8, 'F#:minor': 9, 'Gb:minor': 9, 'G:minor': 10, 'G#:minor': 11,
+                 'Ab:minor': 11, 'A:minor': 0, 'A#:minor': 1, 'Bb:minor': 1, 'B:minor': 2}
+
 class LabParser:
 
-    def parse_keys(self, filename):
+    def parse_keys(self, filename, keymap = simple_keymap):
         handle = open(filename, 'r')
         reader = csv.reader(handle, dialect = "excel-tab")
         keys = []
         for row in reader:
             if len(row) == 4:
-                key = row[3]
+                key = keymap[row[3]]
             else:
                 key = None
             time = float(row[0])
             keys.append(Key(key, time))
         handle.close()
         return keys
+
+

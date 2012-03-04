@@ -1,5 +1,6 @@
 from naive import Naive
 from util import *
+import matplotlib.pyplot as plt
 import argparse
 
 class Evaluator:
@@ -57,25 +58,52 @@ class Evaluator:
                 'misses': misses}
 
     def plot(self, keys, true_keys):
+        keys_keys = [k.key for k in keys]
+        keys_time = [k.time for k in keys]
+        true_keys_keys = [k.key for k in true_keys]
+        true_keys_time = [k.time for k in true_keys]
+
+        fig = plt.figure()
+        axes = fig.add_subplot(1, 1, 1)
+        axes.step(keys_time, keys_keys)
+        axes.step(true_keys_time, true_keys_keys)
+        axes.set_ylim([-1, 12]) # hack
+        axes.set_yticks(range(-1, 12))
+        axes.set_yticklabels(['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', ''])
+        plt.show()
+        
         pass
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate key detection algorithm.')
     parser.add_argument("--algorithm", "-a", default = "Naive", choices = ["Naive"])
-    parser.add_argument("--plot", "-p", action = "store_true", nargs = 0)
+    parser.add_argument("--plot", "-p", action = "store_true")
+    parser.add_argument("--length", "-l")
     parser.add_argument("mp3")
     parser.add_argument("truth")
     args = parser.parse_args()
 
-    algorithm = globals()[args.algorithm](args.mp3)
+    algo_class = globals()[args.algorithm]
+    if args.length:
+        algorithm = algo_class(args.mp3, float(args.length))
+    else:
+        algorithm = algo_class(args.mp3)
     keys = algorithm.execute()
     parser = LabParser()
     true_keys = parser.parse_keys(args.truth)
+    if args.length:
+        true_keys = filter(lambda k: k.time < float(args.length), true_keys)
 
     evaluator = Evaluator()
     print(evaluator.evaluate(keys, true_keys))
 
     if args.plot:
-        evaluator.plot(keys, true_keys)
+        if args.length:
+            max_length = args.length
+        else:
+            max_length = len(algorithm.audio / algorithm.samp_rate)
+        def pad_keys(keys):
+            return keys + [Key(keys[-1].key, max_length)]
+        evaluator.plot(pad_keys(keys), pad_keys(true_keys))
     

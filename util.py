@@ -51,7 +51,8 @@ class Mp3Reader:
         mono = np.concatenate((mono, [0] * (4 - (len(mono) % 4))))
         # downsample
         downsample_factor = 4
-        mono = signal.resample(mono, len(mono) / downsample_factor)
+        if downsample_factor > 1:
+            mono = downsample(mono, downsample_factor)
         return (samp_rate / downsample_factor, mono)
         
     def _mp3_to_wav(self, mp3_filename, wav_filename):
@@ -129,3 +130,8 @@ class LabParser:
         return keys
 
 
+def downsample(sig, factor):
+    fir = signal.firwin(61, 1.0 / factor)
+    sig2 = np.convolve(sig, fir, mode="valid")
+    sig2 = np.array([int(x) for i, x in enumerate(sig2) if i % factor == 0], dtype = sig.dtype)
+    return sig2

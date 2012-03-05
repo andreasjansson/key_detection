@@ -48,7 +48,8 @@ class Mp3Reader:
             mono = mono[0:int(length * samp_rate)]
 
         # pad with zeroes before downsampling
-        mono = np.concatenate((mono, [0] * (4 - (len(mono) % 4))))
+        padding = np.array([0] * (4 - (len(mono) % 4)), dtype = mono.dtype)
+        mono = np.concatenate((mono, padding))
         # downsample
         downsample_factor = 4
         if downsample_factor > 1:
@@ -81,7 +82,6 @@ class BasicTemplate(Template):
         self.profile = np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1])
 
 
-# TODO: test!!!
 class Chromagram:
     """
     This is a simple 12-bin chromagram (1 bin per semitone),
@@ -94,16 +94,13 @@ class Chromagram:
         """
         self.values = np.zeros(12)
         freqs = np.arange(len(spectrum)) * samp_rate / (len(spectrum) * 2)
+        c0 = 16.3516
         for i, val in enumerate(spectrum):
             freq = freqs[i]
             if freq > 0: # disregard dc offset
-                bin = self._bin_for_freq(freq)
+                bin = round(12 * math.log(freq / c0, 2)) % 12
                 self.values[bin] += val
         self.values = self.values / self.values.max()
-
-    def _bin_for_freq(self, freq):
-        c0 = 16.3516
-        return round(12 * math.log(freq / c0, 2)) % 12
 
 
 simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,

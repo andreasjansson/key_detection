@@ -22,6 +22,7 @@ class Naive(Algorithm):
             time = float(i) * self.window_size / self.samp_rate
             key = self.template.match(chromagram)
             self.keys.append(Key(key, time))
+            print("window {0}/{1}".format(i, windows))
         return self.keys
 
     def _get_spectrum(self, index):

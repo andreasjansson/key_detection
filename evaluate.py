@@ -63,10 +63,13 @@ class Evaluator:
         true_keys_keys = [k.key for k in true_keys]
         true_keys_time = [k.time for k in true_keys]
 
+        for key in true_keys:
+            print(str(key))
+
         fig = plt.figure()
         axes = fig.add_subplot(1, 1, 1)
-        axes.step(keys_time, keys_keys)
-        axes.step(true_keys_time, true_keys_keys)
+        axes.step(true_keys_time, true_keys_keys, "g-", linewidth = 2, where = 'post')
+        axes.step(keys_time, keys_keys, "r-", where = 'post')
         axes.set_ylim([-1, 12]) # hack
         axes.set_yticks(range(-1, 12))
         axes.set_yticklabels(['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', ''])
@@ -86,7 +89,7 @@ if __name__ == '__main__':
 
     algo_class = globals()[args.algorithm]
     if args.length:
-        algorithm = algo_class(args.mp3, float(args.length))
+        algorithm = algo_class(args.mp3, length = float(args.length))
     else:
         algorithm = algo_class(args.mp3)
     keys = algorithm.execute()
@@ -100,9 +103,9 @@ if __name__ == '__main__':
 
     if args.plot:
         if args.length:
-            max_length = args.length
+            max_length = float(args.length)
         else:
-            max_length = len(algorithm.audio / algorithm.samp_rate)
+            max_length = len(algorithm.audio) / algorithm.samp_rate + 1 # +1 for rounding errors
         def pad_keys(keys):
             return keys + [Key(keys[-1].key, max_length)]
         evaluator.plot(pad_keys(keys), pad_keys(true_keys))

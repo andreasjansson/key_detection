@@ -64,9 +64,6 @@ class Evaluator:
         true_keys_keys = [k.key for k in true_keys]
         true_keys_time = [k.time for k in true_keys]
 
-        for key in true_keys:
-            print(str(key))
-
         fig = plt.figure()
         axes = fig.add_subplot(1, 1, 1)
         axes.step(true_keys_time, true_keys_keys, "g-", linewidth = 2, where = 'post')
@@ -99,7 +96,8 @@ if __name__ == '__main__':
         algorithm = algo_class(args.mp3, length = float(args.length), options = options)
     else:
         algorithm = algo_class(args.mp3, options = options)
-    keys = algorithm.execute()
+    algorithm.execute()
+    keys = algorithm.filter_repeated_keys()
     parser = LabParser()
     true_keys = parser.parse_keys(args.truth)
     if args.length:

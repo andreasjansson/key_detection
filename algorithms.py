@@ -17,6 +17,14 @@ class Algorithm:
     def execute(self):
         raise NotImplementedError()
 
+    def filter_repeated_keys(self):
+        new_keys = []
+        for i, key in enumerate(self.keys):
+            if i == 0 or key.key != self.keys[i - 1].key:
+                new_keys.append(key)
+        self.keys = new_keys
+        return new_keys
+
 
 class Windowed(Algorithm):
     """

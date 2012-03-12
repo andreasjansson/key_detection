@@ -5,6 +5,7 @@ import numpy as np
 import math
 import os
 import csv
+from scipy.spatial.distance import cosine
 
 class Key:
     def __init__(self, key, time):
@@ -14,15 +15,13 @@ class Key:
     def __str__(self):
         return "{0}: {1}".format(self.time, self.key)
 
+class Beat:
+    def __init__(self, beat, time):
+        self.beat = beat
+        self.time = time
 
-class Algorithm:
-
-    def __init__(self, mp3_file, length):
-        self.samp_rate, self.audio = Mp3Reader().read(mp3_file, length)
-        self.keys = []
-
-    def execute(self):
-        raise NotImplementedError()
+    def __str__(self):
+        return "{0}: {1}".format(self.time, self.beat)
 
 
 class Mp3Reader:
@@ -66,7 +65,7 @@ class Mp3Reader:
 
 class Template:
     def match(self, chromagram):
-        max_score = -1
+        max_score = float("-inf")
         max_i = -1
         for i in range(12):
             profile = np.roll(self.profile, i)
@@ -100,7 +99,11 @@ class Chromagram:
             if freq > 0: # disregard dc offset
                 bin = round(12 * math.log(freq / c0, 2)) % 12
                 self.values[bin] += val
-        self.values = self.values / self.values.max()
+
+        if self.values.max() == 0:
+            self.values = np.zeros(12)
+        else:
+            self.values = self.values / self.values.max()
 
 
 simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
@@ -126,6 +129,15 @@ class LabParser:
         handle.close()
         return keys
 
+    def parse_beats(self, filename):
+        beats = []
+        with open(filename, 'r') as f:
+            reader = csv.reader(f, dialect = "excel-tab")
+            for row in reader:
+                time = float(row[0])
+                beat = int(row[1])
+                beats.append(Beat(beat, time))
+        return beats
 
 def downsample(sig, factor):
     fir = signal.firwin(61, 1.0 / factor)

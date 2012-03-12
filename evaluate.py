@@ -1,7 +1,8 @@
-from naive import Naive
 from util import *
+from algorithms import *
 import matplotlib.pyplot as plt
 import argparse
+from pprint import pprint
 
 class Evaluator:
     """
@@ -80,18 +81,24 @@ class Evaluator:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate key detection algorithm.')
-    parser.add_argument("--algorithm", "-a", default = "Naive", choices = ["Naive"])
+    parser.add_argument("--algorithm", "-a", default = "Naive", choices = ["Naive", "BeatWindowsSimple", "BasicHMM"])
     parser.add_argument("--plot", "-p", action = "store_true")
     parser.add_argument("--length", "-l")
+    parser.add_argument("--options", "-o")
     parser.add_argument("mp3")
     parser.add_argument("truth")
     args = parser.parse_args()
 
+    options = None
+    if args.options is not None:
+        options = [s.strip() for s in args.options.split(",")]
+        options = dict([tuple(o.split("=")) for o in options])
+
     algo_class = globals()[args.algorithm]
     if args.length:
-        algorithm = algo_class(args.mp3, length = float(args.length))
+        algorithm = algo_class(args.mp3, length = float(args.length), options = options)
     else:
-        algorithm = algo_class(args.mp3)
+        algorithm = algo_class(args.mp3, options = options)
     keys = algorithm.execute()
     parser = LabParser()
     true_keys = parser.parse_keys(args.truth)

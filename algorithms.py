@@ -7,6 +7,7 @@ import numpy as np
 from pprint import pprint
 import ghmm
 from copy import copy
+import logging
 
 class Algorithm:
 
@@ -27,9 +28,6 @@ class Algorithm:
 
 
 class Windowed(Algorithm):
-    """
-    Naive template based key detection algorithm with fixed window size.
-    """
 
     def __init__(self, mp3_file, windows, length = None):
         Algorithm.__init__(self, mp3_file, length)
@@ -67,7 +65,7 @@ class Windowed(Algorithm):
         return spectrum
 
 
-class Naive(Windowed):
+class FixedWindow(Windowed):
     """
     Naive template based key detection algorithm with fixed window size.
     """
@@ -90,7 +88,7 @@ class BeatWindowsSimple(Windowed):
         Windowed.__init__(self, mp3_file, windows, length)
 
 
-class BasicHMM(Naive):
+class BasicHMM(FixedWindow):
 
     def execute(self):
         raw_keys = Windowed.execute(self)
@@ -111,3 +109,44 @@ class BasicHMM(Naive):
 
         return keys
         
+
+class GaussianMixtureHMM(FixedWindow):
+
+    def execute(self):
+
+        raw_keys = Windowed.execute(self)
+        symbols = ghmm.IntegerRange(0, 12)
+        stay_prob = .78
+        trans_prob = .02
+        trans_matrix = (np.diag([stay_prob - trans_prob] * 12) + trans_prob).tolist()
+        initial = [1.0 / 12] * 12
+
+        mixture_matrix = None
+        profile = np.array([100, 0, 100, 0, 100, 100, 0, 100, 0, 100, 0, 100])
+        for i in range(0, 12):
+            row = np.array([np.roll(profile, i), np.array([10] * 12), np.array([1.0/12] * 12)])
+            if mixture_matrix is None:
+                mixture_matrix = np.array([row])
+            else:
+                mixture_matrix = np.vstack((mixture_matrix, np.array([row])))
+
+        #logging.getLogger("GHMM").setLevel(logging.DEBUG)
+        f = ghmm.Float()
+        hmm = ghmm.HMMFromMatrices(f, ghmm.GaussianMixtureDistribution(f), trans_matrix,
+                                   mixture_matrix.tolist(), initial)
+        emissions = ghmm.EmissionSequence(f, [key.key for key in raw_keys])
+
+        test = hmm.sampleSingle(12)
+        pprint("here")
+        pprint(str(test))
+
+        #actual_keys = hmm.viterbi(emissions)[0]
+        actual_keys = hmm.viterbi(test)[0]
+
+        pprint(actual_keys)
+
+        keys = copy(raw_keys)
+        for i in range(len(keys)):
+            keys[i].key = actual_keys[i]
+
+        return keys

@@ -78,7 +78,7 @@ class Evaluator:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate key detection algorithm.')
-    parser.add_argument("--algorithm", "-a", default = "Naive", choices = ["Naive", "BeatWindowsSimple", "BasicHMM"])
+    parser.add_argument("--algorithm", "-a", default = "FixedWindow", choices = ["FixedWindow", "BeatWindowsSimple", "BasicHMM", "GaussianMixtureHMM"])
     parser.add_argument("--plot", "-p", action = "store_true")
     parser.add_argument("--length", "-l")
     parser.add_argument("--options", "-o")

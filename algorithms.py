@@ -151,8 +151,13 @@ class GaussianMixtureHMM(FixedWindow):
 #        emissions = ghmm.EmissionSequence(f, [key.key for key in raw_keys])
 
         test = hmm.sample(12,12)
+        test = ghmm.EmissionSequence(f, [1.0, 0.0, 0.0, 1.0, 0.0, 0.0])
         pprint("here")
         pprint(str(test))
+
+        pprint(hmm.cmodel.dim) # is 1 should be 2!!!
+        pprint(hmm.getEmissionProbability([0.0, 1.0], 0))
+        exit(0)
 
         #actual_keys = hmm.viterbi(emissions)[0]
         actual_keys = hmm.viterbi(test)[0]

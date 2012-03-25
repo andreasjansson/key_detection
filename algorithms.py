@@ -114,29 +114,43 @@ class GaussianMixtureHMM(FixedWindow):
 
     def execute(self):
 
-        raw_keys = Windowed.execute(self)
+#        raw_keys = Windowed.execute(self)
         symbols = ghmm.IntegerRange(0, 12)
-        stay_prob = .78
-        trans_prob = .02
+        #stay_prob = .78
+        #trans_prob = .02
+
+        stay_prob = trans_prob = 1.0/12
+
         trans_matrix = (np.diag([stay_prob - trans_prob] * 12) + trans_prob).tolist()
         initial = [1.0 / 12] * 12
 
         mixture_matrix = None
-        profile = np.array([100, 0, 100, 0, 100, 100, 0, 100, 0, 100, 0, 100])
+        profile = np.array([1.0, 0.0])#, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0])
         for i in range(0, 12):
-            row = np.array([np.roll(profile, i), np.array([10] * 12), np.array([1.0/12] * 12)])
+            prof = np.roll(profile, i)
+            state = []
+            for p in prof:
+                state = state + [[p]] + [([0.1] * 4)]
+            state = state + [[0.1] * 2]
+
+            pprint(state)
+
             if mixture_matrix is None:
-                mixture_matrix = np.array([row])
+                mixture_matrix = np.array([state])
             else:
-                mixture_matrix = np.vstack((mixture_matrix, np.array([row])))
+                mixture_matrix = np.vstack((mixture_matrix, np.array([state])))
+
+        pprint(mixture_matrix.tolist())
 
         #logging.getLogger("GHMM").setLevel(logging.DEBUG)
         f = ghmm.Float()
-        hmm = ghmm.HMMFromMatrices(f, ghmm.GaussianMixtureDistribution(f), trans_matrix,
-                                   mixture_matrix.tolist(), initial)
-        emissions = ghmm.EmissionSequence(f, [key.key for key in raw_keys])
+        hmm = ghmm.HMMFromMatrices(f, ghmm.MultivariateGaussianDistribution(f), trans_matrix,
+                                   mixture_matrix, initial)
+        pprint(hmm.cmodel.M)
 
-        test = hmm.sampleSingle(12)
+#        emissions = ghmm.EmissionSequence(f, [key.key for key in raw_keys])
+
+        test = hmm.sample(12,12)
         pprint("here")
         pprint(str(test))
 
@@ -144,6 +158,7 @@ class GaussianMixtureHMM(FixedWindow):
         actual_keys = hmm.viterbi(test)[0]
 
         pprint(actual_keys)
+        exit(0)
 
         keys = copy(raw_keys)
         for i in range(len(keys)):

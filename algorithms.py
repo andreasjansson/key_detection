@@ -93,8 +93,8 @@ class BasicHMM(FixedWindow):
     def execute(self):
         raw_keys = Windowed.execute(self)
         symbols = ghmm.IntegerRange(0, 12)
-        stay_prob = .78
-        trans_prob = .02
+        stay_prob = .9
+        trans_prob = (1 - stay_prob) / 11
         trans_matrix = (np.diag([stay_prob - trans_prob] * 12) + trans_prob).tolist()
         same_prob = .78
         different_prob = .02
@@ -112,61 +112,43 @@ class BasicHMM(FixedWindow):
 
 class GaussianMixtureHMM(FixedWindow):
 
-    def execute(self):
+    def get_emissions(self):
+        emissions = []
+        for i, offset in enumerate(self.windows):
 
-#        raw_keys = Windowed.execute(self)
-        symbols = ghmm.IntegerRange(0, 12)
-        #stay_prob = .78
-        #trans_prob = .02
-
-        stay_prob = trans_prob = 1.0/12
-
-        trans_matrix = (np.diag([stay_prob - trans_prob] * 12) + trans_prob).tolist()
-        initial = [1.0 / 12] * 12
-
-        mixture_matrix = None
-        profile = np.array([1.0, 0.0])#, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0])
-        for i in range(0, 12):
-            prof = np.roll(profile, i)
-            state = []
-            for p in prof:
-                state = state + [[p]] + [([0.1] * 4)]
-            state = state + [[0.1] * 2]
-
-            pprint(state)
-
-            if mixture_matrix is None:
-                mixture_matrix = np.array([state])
+            if i + 1 < len(self.windows):
+                next_offset = self.windows[i + 1] * self.samp_rate
             else:
-                mixture_matrix = np.vstack((mixture_matrix, np.array([state])))
+                next_offset = len(self.audio)
 
-        pprint(mixture_matrix.tolist())
+            if next_offset > len(self.audio):
+                break
 
-        #logging.getLogger("GHMM").setLevel(logging.DEBUG)
-        f = ghmm.Float()
-        hmm = ghmm.HMMFromMatrices(f, ghmm.MultivariateGaussianDistribution(f), trans_matrix,
-                                   mixture_matrix, initial)
-        pprint(hmm.cmodel.M)
+            spectrum = self._get_spectrum(offset * self.samp_rate, next_offset)
+            chromagram = Chromagram(spectrum, self.samp_rate)
+            emissions.append(chromagram.values)
+            print("analysed %.1f/%.1f" % (offset, len(self.audio) / self.samp_rate))
+        return emissions
 
-#        emissions = ghmm.EmissionSequence(f, [key.key for key in raw_keys])
+    def execute(self):
+        stay_prob = .15
+        trans_prob = (1 - stay_prob) / 11
+        trans_probs = (np.diag([stay_prob - trans_prob] * 12) + trans_prob).tolist()
 
-        test = hmm.sample(12,12)
-        test = ghmm.EmissionSequence(f, [1.0, 0.0, 0.0, 1.0, 0.0, 0.0])
-        pprint("here")
-        pprint(str(test))
+        start_probs = [1.0 / 12] * 12
 
-        pprint(hmm.cmodel.dim) # is 1 should be 2!!!
-        pprint(hmm.getEmissionProbability([0.0, 1.0], 0))
-        exit(0)
+        profile = [1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+        profiles = []
+        for i in range(0, 12):
+            profiles.append(np.roll(profile, i).tolist())
 
-        #actual_keys = hmm.viterbi(emissions)[0]
-        actual_keys = hmm.viterbi(test)[0]
+        hmm = HMM(profiles, trans_probs, start_probs)
+        emissions = self.get_emissions()
+        keys = hmm.viterbi(emissions)
+        key_objects = []
 
-        pprint(actual_keys)
-        exit(0)
+        for i, offset in enumerate(self.windows):
+            key_objects.append(Key(keys[i], offset))
 
-        keys = copy(raw_keys)
-        for i in range(len(keys)):
-            keys[i].key = actual_keys[i]
-
-        return keys
+        self.keys = key_objects
+        return key_objects

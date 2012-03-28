@@ -1,3 +1,4 @@
+import operator
 import tempfile
 import scipy.io.wavfile as wavfile
 import scipy.signal as signal
@@ -144,3 +145,56 @@ def downsample(sig, factor):
     sig2 = np.convolve(sig, fir, mode="valid")
     sig2 = np.array([int(x) for i, x in enumerate(sig2) if i % factor == 0], dtype = sig.dtype)
     return sig2
+
+
+
+class HMM:
+    """
+    Basic 1st order HMM, can only compute Viterbi path.
+    Takes a np matrix of trained profiles as emission inputs.
+    Originally based on the Wikipedia implementation.
+    """
+
+    def __init__(self, profiles, trans_probs, start_probs):
+
+        assert len(profiles) == len(start_probs) == \
+            len(trans_probs) == len(trans_probs[0])
+
+        self.profiles = profiles
+        self.trans_probs = trans_probs
+        self.start_probs = start_probs
+
+    def viterbi(self, emissions):
+
+        assert len(emissions[0]) == len(self.profiles[0])
+        nstates = len(self.profiles)
+
+        v = [{}]
+        path = {}
+
+        for state in range(nstates):
+            v[0][state] = self.start_probs[state] * self.get_emission_probability(emissions[0], state)
+            path[state] = [state]
+            
+        for t in range(1, len(emissions)):
+            v.append({})
+            new_path = {}
+            emission = emissions[t]
+
+            for state in range(nstates):
+                emission_probability = self.get_emission_probability(emission, state)
+                (prob, prev_state) = max([(v[t - 1][prev] * self.trans_probs[prev][state] * emission_probability, prev) \
+                                              for prev in range(nstates)])
+                v[t][state] = prob
+                new_path[state] = path[prev_state] + [state]
+
+            path = new_path
+
+        (prob, state) = max([(v[len(emissions) - 1][s], s) for s in range(nstates)])
+        return path[state]
+
+    def get_emission_probability(self, emission, state):
+        return dot_product(emission, self.profiles[state])
+
+def dot_product(a, b):
+    return sum(map(operator.mul, a, b))

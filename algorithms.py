@@ -7,7 +7,6 @@ import numpy as np
 from pprint import pprint
 import ghmm
 from copy import copy
-import logging
 
 class Algorithm:
 

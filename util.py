@@ -147,7 +147,7 @@ def downsample(sig, factor):
     return sig2
 
 
-
+# TODO: higher order
 class HMM:
     """
     Basic 1st order HMM, can only compute Viterbi path.
@@ -164,6 +164,7 @@ class HMM:
         self.trans_probs = trans_probs
         self.start_probs = start_probs
 
+    # TODO: how to incorporate std dev? in get_emission_probability?
     def viterbi(self, emissions):
 
         assert len(emissions[0]) == len(self.profiles[0])
@@ -198,3 +199,10 @@ class HMM:
 
 def dot_product(a, b):
     return sum(map(operator.mul, a, b))
+
+
+def generate_spectrogram(audio, window_size):
+    for t in xrange(len(audio), step = window_size):
+        spectrum = abs(fft(audio[t:(t + window_size)]))
+        spectrum = spectrum[0:len(spectrum) / 2]
+        yield (t, spectrum)

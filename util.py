@@ -25,19 +25,9 @@ class Beat:
         return "{0}: {1}".format(self.time, self.beat)
 
 
-class Mp3Reader:
+class AudioReader:
 
-    def read(self, mp3_filename, length = None):
-        """
-        Returns (sampling_rate, data), where the sampling rate is the
-        original sampling rate, downsampled by a factor of 4, and
-        the data signal is a downsampled, mono (left channel) version
-        of the original signal.
-        """
-        wav_filename = tempfile.NamedTemporaryFile(suffix = '.wav', delete = False).name
-        self._mp3_to_wav(mp3_filename, wav_filename)
-        samp_rate, stereo = wavfile.read(wav_filename)
-        os.unlink(wav_filename)
+    def _process(self, samp_rate, stereo, length, downsample_factor):
 
         if len(stereo.shape) == 2:
             mono = stereo[:,0]
@@ -48,13 +38,33 @@ class Mp3Reader:
             mono = mono[0:int(length * samp_rate)]
 
         # pad with zeroes before downsampling
-        padding = np.array([0] * (4 - (len(mono) % 4)), dtype = mono.dtype)
+        padding = np.array([0] * (downsample_factor - (len(mono) % downsample_factor)), dtype = mono.dtype)
         mono = np.concatenate((mono, padding))
         # downsample
-        downsample_factor = 4
         if downsample_factor > 1:
             mono = downsample(mono, downsample_factor)
         return (samp_rate / downsample_factor, mono)
+
+class WavReader(AudioReader):
+
+    def read(self, wav_filename, length = None, downsample_factor = 4):
+        samp_rate, stereo = wavfile.read(wav_filename)
+        return self._process(samp_rate, stereo, length, downsample_factor)
+
+class Mp3Reader(AudioReader):
+
+    def read(self, mp3_filename, length = None, downsample_factor = 4):
+        """
+        Returns (sampling_rate, data), where the sampling rate is the
+        original sampling rate, downsampled by a factor of 4, and
+        the data signal is a downsampled, mono (left channel) version
+        of the original signal.
+        """
+        wav_filename = tempfile.NamedTemporaryFile(suffix = '.wav', delete = False).name
+        self._mp3_to_wav(mp3_filename, wav_filename)
+        samp_rate, stereo = wavfile.read(wav_filename)
+        os.unlink(wav_filename)
+        return self._process(samp_rate, stereo, length, downsample_factor)
         
     def _mp3_to_wav(self, mp3_filename, wav_filename):
         if not os.path.exists(mp3_filename):
@@ -84,27 +94,27 @@ class BasicTemplate(Template):
 
 class Chromagram:
     """
-    This is a simple 12-bin chromagram (1 bin per semitone),
-    tuned to 440.
+    This an n-bin multi-band chromagram tuned to 440Hz.
     """    
     def __init__(self, spectrum, samp_rate,
-                 chroma_bins = 12, spectrum_offset = 0, window_size = None):
+                 chroma_bins = 12, band_fqs = None):
         """
         spectrum is only left half of the spectrum, so its length
         is signal_length / 2.
         """
-        
-        if window_size is None:
-            if spectrum_offset > 0:
-                raise Exception("If using sub-band chromagrams, window_size must be provided")
-            else:
-                window_size = len(spectrum) * 2
+        window_size = len(spectrum) * 2
+
+        if band_fqs is not None:
+            band = map(lambda b: len(spectrum) * b / samp_rate, band_fqs)
+            subspectrum = spectrum[band[0]:band[1]]
+            freqs = np.arange(band[0], band[1]) * samp_rate / window_size
+        else:
+            subspectrum = spectrum
+            freqs = np.arange(0, len(spectrum)) * samp_rate / window_size
 
         self.values = np.zeros(chroma_bins)
-        freqs = np.arange(spectrum_offset, spectrum_offset +
-                      len(spectrum)) * samp_rate / window_size
         c0 = 16.3516
-        for i, val in enumerate(spectrum):
+        for i, val in enumerate(subspectrum):
             freq = freqs[i]
             if freq > 0: # disregard dc offset
                 bin = round(chroma_bins * math.log(freq / c0, 2)) % chroma_bins

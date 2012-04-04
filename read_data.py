@@ -19,7 +19,7 @@ def read_data(track_id, mp3, key_lab_file, writer,
             end = b * (window_size + 1)
             band = spectrum[start:end]
             chromagram = Chromagram(
-                band, start, chroma_bins, samp_rate)
+                band, samp_rate, chroma_bins, start)
             chromagrams += chromagram.values
 
         key = keylab.key_at(t / samp_rate)

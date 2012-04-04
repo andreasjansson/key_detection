@@ -87,18 +87,27 @@ class Chromagram:
     This is a simple 12-bin chromagram (1 bin per semitone),
     tuned to 440.
     """    
-    def __init__(self, spectrum, samp_rate):
+    def __init__(self, spectrum, samp_rate,
+                 chroma_bins = 12, spectrum_offset = 0, window_size = None):
         """
         spectrum is only left half of the spectrum, so its length
         is signal_length / 2.
         """
-        self.values = np.zeros(12)
-        freqs = np.arange(len(spectrum)) * samp_rate / (len(spectrum) * 2)
+        
+        if window_size is None:
+            if spectrum_offset > 0:
+                raise Exception("If using sub-band chromagrams, window_size must be provided")
+            else:
+                window_size = len(spectrum) * 2
+
+        self.values = np.zeros(chroma_bins)
+        freqs = np.arange(spectrum_offset, spectrum_offset +
+                      len(spectrum)) * samp_rate / window_size
         c0 = 16.3516
         for i, val in enumerate(spectrum):
             freq = freqs[i]
             if freq > 0: # disregard dc offset
-                bin = round(12 * math.log(freq / c0, 2)) % 12
+                bin = round(chroma_bins * math.log(freq / c0, 2)) % chroma_bins
                 self.values[bin] += val
 
         if self.values.max() == 0:

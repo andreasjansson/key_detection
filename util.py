@@ -112,7 +112,7 @@ simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
                  'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11,
                  'C:minor': 3, 'C#:minor': 4, 'Db:minor': 4, 'D:minor': 5, 'D#:minor': 6, 'Eb:minor': 6,
                  'E:minor': 7, 'F:minor': 8, 'F#:minor': 9, 'Gb:minor': 9, 'G:minor': 10, 'G#:minor': 11,
-                 'Ab:minor': 11, 'A:minor': 0, 'A#:minor': 1, 'Bb:minor': 1, 'B:minor': 2}
+                 'Ab:minor': 11, 'A:minor': 0, 'A#:minor': 1, 'Bb:minor': 1, 'B:minor': 2, 'Silence': None}
 
 class LabParser:
 
@@ -140,12 +140,17 @@ class LabParser:
                 beats.append(Beat(beat, time))
         return beats
 
-def downsample(sig, factor):
-    fir = signal.firwin(61, 1.0 / factor)
-    sig2 = np.convolve(sig, fir, mode="valid")
-    sig2 = np.array([int(x) for i, x in enumerate(sig2) if i % factor == 0], dtype = sig.dtype)
-    return sig2
+class KeyLab:
 
+    def __init__(self, lab_file):
+        self.keys = LabParser().parse_keys(lab_file)
+
+    def key_at(self, time):
+        # brute force for now
+        for k in reversed(self.keys):
+            if k.time <= time:
+                return k.key
+        return None
 
 # TODO: higher order
 class HMM:
@@ -206,3 +211,9 @@ def generate_spectrogram(audio, window_size):
         spectrum = abs(fft(audio[t:(t + window_size)]))
         spectrum = spectrum[0:len(spectrum) / 2]
         yield (t, spectrum)
+
+def downsample(sig, factor):
+    fir = signal.firwin(61, 1.0 / factor)
+    sig2 = np.convolve(sig, fir, mode="valid")
+    sig2 = np.array([int(x) for i, x in enumerate(sig2) if i % factor == 0], dtype = sig.dtype)
+    return sig2

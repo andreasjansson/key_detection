@@ -39,6 +39,9 @@ class ReadDataTest(unittest.TestCase):
         self.assertFalse(row == row2)
         writer.write_row(row2)
 
+    def test_read_data(self):
+        
+
 if __name__ == '__main__':
     unittest.main()
 

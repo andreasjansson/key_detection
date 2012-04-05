@@ -14,7 +14,8 @@ class ReadDataTest(unittest.TestCase):
         self.db = ''.join(random.sample(string.ascii_lowercase, 10)) + ".db"
 
     def tearDown(self):
-        os.remove(self.db)
+        if path.exists(self.db):
+            os.remove(self.db)
 
     def test_writer_create_db(self):
         writer = SqliteDataWriter(self.db)
@@ -26,7 +27,7 @@ class ReadDataTest(unittest.TestCase):
 
     def test_writer_write_row(self):
         writer = SqliteDataWriter(self.db, 3, 2)
-        writer.create_table()        
+        writer.create_table()
 
         row = range(8)
         self.assertRaises(Exception, writer.write_row, row)
@@ -39,8 +40,14 @@ class ReadDataTest(unittest.TestCase):
         self.assertFalse(row == row2)
         writer.write_row(row2)
 
-    def test_read_data(self):
-        
+    def test_read_real_data(self):
+        db = "test_read_real_data.db"
+        if path.exists(db):
+            os.remove(db)
+        writer = SqliteDataWriter(db, 3 * 12, 3)
+        writer.create_table()
+
+        read_data(0, "13_a_day_in_the_life.mp3", "13_a_day_in_the_life.lab", writer)
 
 if __name__ == '__main__':
     unittest.main()

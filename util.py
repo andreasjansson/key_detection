@@ -6,6 +6,7 @@ import numpy as np
 import math
 import os
 import csv
+from scipy import fft
 from scipy.spatial.distance import cosine
 
 class Key:
@@ -121,7 +122,7 @@ class Chromagram:
                 self.values[bin] += val
 
         if self.values.max() == 0:
-            self.values = np.zeros(12)
+            self.values = np.zeros(chroma_bins)
         else:
             self.values = self.values / self.values.max()
 
@@ -226,7 +227,7 @@ def dot_product(a, b):
 
 
 def generate_spectrogram(audio, window_size):
-    for t in xrange(len(audio), step = window_size):
+    for t in xrange(0, len(audio), window_size):
         spectrum = abs(fft(audio[t:(t + window_size)]))
         spectrum = spectrum[0:len(spectrum) / 2]
         yield (t, spectrum)

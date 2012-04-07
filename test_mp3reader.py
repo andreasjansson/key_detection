@@ -25,5 +25,9 @@ class TestMp3Reader(unittest.TestCase):
         self.assertGreater(442, peak_freq)
         self.assertLess(438, peak_freq)
 
+    def test_read_quoted(self):
+        reader = Mp3Reader()
+        samp_rate, signal = reader.read("/home/andreas/music/The Beatles/Abbey_Road/05_Octopus's_Garden.mp3", 1)
+
 if __name__ == '__main__':
     unittest.main()

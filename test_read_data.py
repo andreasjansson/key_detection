@@ -47,7 +47,8 @@ class ReadDataTest(unittest.TestCase):
         writer = SqliteDataWriter(db, 3 * 12, 3)
         writer.create_table()
 
-        read_data(0, "13_a_day_in_the_life.mp3", "13_a_day_in_the_life.lab", writer)
+        reader = ChromaReader()
+        reader.read_data(0, "13_a_day_in_the_life.mp3", "13_a_day_in_the_life.lab", writer)
 
 if __name__ == '__main__':
     unittest.main()

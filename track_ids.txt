@@ -1,0 +1,138 @@
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/15_Carry_That_Weight.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/15_Carry_That_Weight.lab) as track_id 0
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/14_Golden_Slumbers.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/14_Golden_Slumbers.lab) as track_id 1
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/11_Mean_Mr_Mustard.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/11_Mean_Mr_Mustard.lab) as track_id 2
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/12_Polythene_Pam.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/12_Polythene_Pam.lab) as track_id 3
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/04_Oh!_Darling.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/04_Oh!_Darling.lab) as track_id 4
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/01_Come_Together.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/01_Come_Together.lab) as track_id 5
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/02_Something.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/02_Something.lab) as track_id 6
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/05_Octopus's_Garden.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/05_Octopus's_Garden.lab) as track_id 7
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/10_Sun_King.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/10_Sun_King.lab) as track_id 8
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/16_The_End.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/16_The_End.lab) as track_id 9
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/08_Because.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/08_Because.lab) as track_id 10
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/09_You_Never_Give_Me_Your_Money.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/09_You_Never_Give_Me_Your_Money.lab) as track_id 11
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/13_She_Came_In_Through_The_Bathroom_Window.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/13_She_Came_In_Through_The_Bathroom_Window.lab) as track_id 12
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/07_Here_Comes_The_Sun.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/07_Here_Comes_The_Sun.lab) as track_id 13
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/06_I_Want_You.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/06_I_Want_You.lab) as track_id 14
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/17_Her_Majesty.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/17_Her_Majesty.lab) as track_id 15
+
+Inserting (/home/andreas/music/The Beatles/Abbey_Road/03_Maxwell's_Silver_Hammer.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/03_Maxwell's_Silver_Hammer.lab) as track_id 16
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/12_Wait.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/12_Wait.lab) as track_id 17
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/10_I'm_Looking_Through_You.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/10_I'm_Looking_Through_You.lab) as track_id 18
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/01_Drive_My_Car.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/01_Drive_My_Car.lab) as track_id 19
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/02_Norwegian_Wood_(This_Bird_Has_Flown).mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/02_Norwegian_Wood_(This_Bird_Has_Flown).lab) as track_id 20
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/13_If_I_Needed_Someone.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/13_If_I_Needed_Someone.lab) as track_id 21
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/14_Run_For_Your_Life.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/14_Run_For_Your_Life.lab) as track_id 22
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/06_The_Word.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/06_The_Word.lab) as track_id 23
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/03_You_Won't_See_Me.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/03_You_Won't_See_Me.lab) as track_id 24
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/09_Girl.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/09_Girl.lab) as track_id 25
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/11_In_My_Life.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/11_In_My_Life.lab) as track_id 26
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/04_Nowhere_Man.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/04_Nowhere_Man.lab) as track_id 27
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/05_Think_For_Yourself.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/05_Think_For_Yourself.lab) as track_id 28
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/07_Michelle.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/07_Michelle.lab) as track_id 29
+
+Inserting (/home/andreas/music/The Beatles/Rubber_Soul/08_What_Goes_On.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/08_What_Goes_On.lab) as track_id 30
+
+Inserting (/home/andreas/music/The Beatles/Revolver/02_Eleanor_Rigby.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/02_Eleanor_Rigby.lab) as track_id 31
+
+Inserting (/home/andreas/music/The Beatles/Revolver/13_Got_To_Get_You_Into_My_Life.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/13_Got_To_Get_You_Into_My_Life.lab) as track_id 32
+
+Inserting (/home/andreas/music/The Beatles/Revolver/04_Love_You_To.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/04_Love_You_To.lab) as track_id 33
+
+Inserting (/home/andreas/music/The Beatles/Revolver/05_Here,_There_And_Everywhere.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/05_Here,_There_And_Everywhere.lab) as track_id 34
+
+Inserting (/home/andreas/music/The Beatles/Revolver/14_Tomorrow_Never_Knows.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/14_Tomorrow_Never_Knows.lab) as track_id 35
+
+Inserting (/home/andreas/music/The Beatles/Revolver/06_Yellow_Submarine.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/06_Yellow_Submarine.lab) as track_id 36
+
+Inserting (/home/andreas/music/The Beatles/Revolver/07_She_Said_She_Said.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/07_She_Said_She_Said.lab) as track_id 37
+
+Inserting (/home/andreas/music/The Beatles/Revolver/10_For_No_One.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/10_For_No_One.lab) as track_id 38
+
+Inserting (/home/andreas/music/The Beatles/Revolver/09_And_Your_Bird_Can_Sing.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/09_And_Your_Bird_Can_Sing.lab) as track_id 39
+
+Inserting (/home/andreas/music/The Beatles/Revolver/01_Taxman.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/01_Taxman.lab) as track_id 40
+
+Inserting (/home/andreas/music/The Beatles/Revolver/08_Good_Day_Sunshine.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/08_Good_Day_Sunshine.lab) as track_id 41
+
+Inserting (/home/andreas/music/The Beatles/Revolver/03_I'm_Only_Sleeping.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/03_I'm_Only_Sleeping.lab) as track_id 42
+
+Inserting (/home/andreas/music/The Beatles/Revolver/11_Doctor_Robert.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/11_Doctor_Robert.lab) as track_id 43
+
+Inserting (/home/andreas/music/The Beatles/Revolver/12_I_Want_To_Tell_You.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Revolver/12_I_Want_To_Tell_You.lab) as track_id 44
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/02_The_Fool_On_The_Hill.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/02_The_Fool_On_The_Hill.lab) as track_id 45
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/10_Baby_You're_A_Rich_Man.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/10_Baby_You're_A_Rich_Man.lab) as track_id 46
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/11_All_You_Need_Is_Love.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/11_All_You_Need_Is_Love.lab) as track_id 47
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/01_Magical_Mystery_Tour.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/01_Magical_Mystery_Tour.lab) as track_id 48
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/09_Penny_Lane.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/09_Penny_Lane.lab) as track_id 49
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/07_Hello_Goodbye.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/07_Hello_Goodbye.lab) as track_id 50
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/03_Flying.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/03_Flying.lab) as track_id 51
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/05_Your_Mother_Should_Know.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/05_Your_Mother_Should_Know.lab) as track_id 52
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/04_Blue_Jay_Way.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/04_Blue_Jay_Way.lab) as track_id 53
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/08_Strawberry_Fields_Forever.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/08_Strawberry_Fields_Forever.lab) as track_id 54
+
+Inserting (/home/andreas/music/The Beatles/Magical_Mystery_Tour/06_I_Am_The_Walrus.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Magical_Mystery_Tour/06_I_Am_The_Walrus.lab) as track_id 55
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/08_Within_You_Without_You.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/08_Within_You_Without_You.lab) as track_id 56
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/04_Getting_Better.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/04_Getting_Better.lab) as track_id 57
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/03_Lucy_In_The_Sky_With_Diamonds.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/03_Lucy_In_The_Sky_With_Diamonds.lab) as track_id 58
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/12_Sgt._Pepper's_Lonely_Hearts_Club_Band_(Reprise).mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/12_Sgt._Pepper's_Lonely_Hearts_Club_Band_(Reprise).lab) as track_id 59
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/07_Being_For_The_Benefit_Of_Mr._Kite!.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/07_Being_For_The_Benefit_Of_Mr._Kite!.lab) as track_id 60
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/11_Good_Morning_Good_Morning.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/11_Good_Morning_Good_Morning.lab) as track_id 61
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/05_Fixing_A_Hole.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/05_Fixing_A_Hole.lab) as track_id 62
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/02_With_A_Little_Help_From_My_Friends.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/02_With_A_Little_Help_From_My_Friends.lab) as track_id 63
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/13_A_Day_In_The_Life.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/13_A_Day_In_The_Life.lab) as track_id 64
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/10_Lovely_Rita.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/10_Lovely_Rita.lab) as track_id 65
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/01_Sgt._Pepper's_Lonely_Hearts_Club_Band.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/01_Sgt._Pepper's_Lonely_Hearts_Club_Band.lab) as track_id 66
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/06_She's_Leaving_Home.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/06_She's_Leaving_Home.lab) as track_id 67
+
+Inserting (/home/andreas/music/The Beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/09_When_I'm_Sixty-Four.mp3, /home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/09_When_I'm_Sixty-Four.lab) as track_id 68
+

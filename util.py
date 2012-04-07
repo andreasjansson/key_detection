@@ -70,7 +70,7 @@ class Mp3Reader(AudioReader):
     def _mp3_to_wav(self, mp3_filename, wav_filename):
         if not os.path.exists(mp3_filename):
             raise IOError('File not found')
-        os.system("mpg123 -w " + wav_filename + " " + mp3_filename + " &> /dev/null")
+        os.system("mpg123 -w \"" + wav_filename.replace('"', '\\"') + "\" \"" + mp3_filename.replace('"', '\\"') + "\" &> /dev/null")
         if not os.path.exists(wav_filename):
             raise IOError('Failed to create wav file')
 
@@ -142,7 +142,11 @@ class LabParser:
         keys = []
         for row in reader:
             if len(row) == 4:
-                key = keymap[row[3]]
+                key_name = row[3]
+                if key_name in keymap:
+                    key = keymap[key_name]
+                else:
+                    key = None
             else:
                 key = None
             time = float(row[0])
@@ -221,6 +225,11 @@ class HMM:
 
     def get_emission_probability(self, emission, state):
         return dot_product(emission, self.profiles[state])
+
+class Tuner:
+
+    def tune_chromas(self, chromas):
+        pass
 
 def dot_product(a, b):
     return sum(map(operator.mul, a, b))

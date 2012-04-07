@@ -8,6 +8,8 @@ import os
 import csv
 from scipy import fft
 from scipy.spatial.distance import cosine
+import sqlite3 as sqlite
+import sys
 
 class Key:
     def __init__(self, key, time):
@@ -175,6 +177,68 @@ class KeyLab:
             if k.time <= time:
                 return k.key
         return None
+
+class Db:
+
+    def __init__(self, database, table, columns, auto_id = True):
+        self.database = database
+        self.table = table
+        self.auto_id = auto_id
+        if auto_id:
+            self.columns = ['id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT'] + columns
+        else:
+            self.columns = columns
+        self.con = sqlite.connect(self.database)
+        self.cur = self.con.cursor()
+
+    def create_table(self):
+        sql = 'CREATE TABLE %s (%s)' % (self.table, (', ').join(self.columns))
+        self.cur.execute(sql)
+        self.con.commit()
+
+    def insert(self, row):
+        expected_columns = len(self.columns) - 1 if self.auto_id else len(self.columns)
+        if len(row) != expected_columns:
+            message = "Column length %d doesn't match expected column length %d" % \
+                (len(row), expected_columns)
+            raise Exception(message)
+
+        row = "'" + "', '".join(str(x).replace("'", "\\'") for x in row) + "'"
+        if self.auto_id:
+            sql = "INSERT INTO %s VALUES (NULL, %s)" % (self.table, row)
+        else:
+            sql = "INSERT INTO %s VALUES (%s)" % (row)
+        self.cur.execute(sql)
+        self.con.commit()
+
+    def select(self, columns, where = None, order = None):
+        if len(set(columns).difference(self.columns)) == 0:
+            raise Exception('Columns don\'t match')
+        if where:
+            where_clause = 'WHERE ' + where
+        else:
+            where_clause = ''
+        if order:
+            order_clause = 'ORDER BY ' + order
+        else:
+            order_clause = ''
+        sql = 'SELECT %s FROM %s %s %s' % \
+            ((', ').join(columns), self.table, where_clause, order_clause)
+        result = self.con.execute(sql)
+        return [dict(zip(columns, row)) for row in result.fetchall()]
+
+class RawDb(Db):
+
+    def __init__(self, database, chroma_bins = 3 * 12, bands_count = 3):
+        chroma_bins = chroma_bins
+        bands_count = bands_count
+        columns = ["chroma_%d_%d FLOAT NOT NULL" % (i, j)
+                   for i in range(bands_count)
+                   for j in range(chroma_bins)]
+        columns = ['track_id INTEGER NOT NULL',
+                   'i INTEGER NOT NULL',
+                   'key INTEGER NOT NULL'] + columns
+        Db.__init__(self, database, 'raw', columns)
 
 # TODO: higher order
 class HMM:

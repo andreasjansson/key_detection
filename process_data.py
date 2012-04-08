@@ -32,8 +32,19 @@ class Processor:
                     markov[i][j] /= colsum
         return markov
 
+    def rows_by_track(self):
+        track_id = 1
+        while True:
+            rows = self.select(['*'], 'track_id = ' + track_id)
+            if not len(rows):
+                break
+            yield rows
+            track_id += 1
+
     def tune(self, output_writer = TunedDb('data.db'), bins_per_pitch = 3, bands = 3):
-        for 
+        tuner = Tuner(bins_per_pitch)
+        for rows in self.rows_by_track():
+            print(rows)
 
     def get_chromagrams():
         pass

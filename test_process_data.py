@@ -12,7 +12,12 @@ class ProcessDataTest(unittest.TestCase):
 
     def test_markov(self):
         processor = Processor()
-        print(processor.get_markov_matrix())
+        processor.get_markov_matrix()
+
+    def test_rows_by_track(self):
+        processor = Processor()
+        for rows in processor.rows_by_track():
+            print(rows)
 
 if __name__ == '__main__':
     unittest.main()

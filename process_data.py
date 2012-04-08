@@ -2,20 +2,19 @@ from util import *
 
 class Processor:
 
-    def __init__(self, database = 'data.db', keymap = simple_keymap):
-        self.db = RawDb(database)
+    def __init__(self, input_db = RawDb('data.db'), keymap = simple_keymap):
+        self.input_db = input_db
         self.keymap = simple_keymap
 
     # TODO: unit test
     def get_markov_matrix(self):
-        rows = self.db.select(['track_id', 'i', 'key'], order = 'track_id, i')
+        rows = self.db.select(['track_id', 'key'], order = 'track_id, i')
         key_count = len(self.keymap.keys()) 
         basic_markov = [0] * key_count
         prev_track = None
         prev_key = -1
         for row in rows:
             track = row['track_id']
-            i = row['i']
             key = row['key']
             if prev_track is not None and \
                     key > -1 and prev_key > -1:
@@ -32,6 +31,9 @@ class Processor:
                 for j in range(key_count):
                     markov[i][j] /= colsum
         return markov
+
+    def tune(self, output_writer = TunedDb('data.db'), bins_per_pitch = 3, bands = 3):
+        for 
 
     def get_chromagrams():
         pass

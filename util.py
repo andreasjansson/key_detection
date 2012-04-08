@@ -10,6 +10,7 @@ from scipy import fft
 from scipy.spatial.distance import cosine
 import sqlite3 as sqlite
 import sys
+import string
 
 class Key:
     def __init__(self, key, time):
@@ -185,14 +186,14 @@ class Db:
         self.table = table
         self.auto_id = auto_id
         if auto_id:
-            self.columns = ['id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT'] + columns
-        else:
-            self.columns = columns
+            columns = [('id', 'INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT')] + columns
+        self.columns = columns
         self.con = sqlite.connect(self.database)
         self.cur = self.con.cursor()
 
     def create_table(self):
-        sql = 'CREATE TABLE %s (%s)' % (self.table, (', ').join(self.columns))
+        columns_string = ', '.join(map(' '.join, self.columns))
+        sql = 'CREATE TABLE %s (%s)' % (self.table, columns_string)
         self.cur.execute(sql)
         self.con.commit()
 
@@ -212,7 +213,11 @@ class Db:
         self.con.commit()
 
     def select(self, columns, where = None, order = None):
-        if len(set(columns).difference(self.columns)) == 0:
+        table_columns = map(lambda x: x[0], self.columns)
+        columns = map(string.strip, columns)
+        columns = reduce(lambda x, y: x + (table_columns if y == '*' else [y]), columns, [])
+
+        if len(set(columns).difference(table_columns)) != 0:
             raise Exception('Columns don\'t match')
         if where:
             where_clause = 'WHERE ' + where
@@ -224,6 +229,7 @@ class Db:
             order_clause = ''
         sql = 'SELECT %s FROM %s %s %s' % \
             ((', ').join(columns), self.table, where_clause, order_clause)
+
         result = self.con.execute(sql)
         return [dict(zip(columns, row)) for row in result.fetchall()]
 
@@ -232,12 +238,12 @@ class RawDb(Db):
     def __init__(self, database, chroma_bins = 3 * 12, bands_count = 3):
         chroma_bins = chroma_bins
         bands_count = bands_count
-        columns = ["chroma_%d_%d FLOAT NOT NULL" % (i, j)
+        columns = [('chroma_%d_%d' % (i, j),  'FLOAT NOT NULL')
                    for i in range(bands_count)
                    for j in range(chroma_bins)]
-        columns = ['track_id INTEGER NOT NULL',
-                   'i INTEGER NOT NULL',
-                   'key INTEGER NOT NULL'] + columns
+        columns = [('track_id', 'INTEGER NOT NULL'),
+                   ('i', 'INTEGER NOT NULL'),
+                   ('key', 'INTEGER NOT NULL')] + columns
         Db.__init__(self, database, 'raw', columns)
 
 # TODO: higher order

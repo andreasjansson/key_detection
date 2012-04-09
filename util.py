@@ -180,7 +180,7 @@ class KeyLab:
                 return k.key
         return None
 
-class Db:
+class Table:
 
     def __init__(self, database, table, columns, auto_id = True):
         self.database = database
@@ -234,7 +234,7 @@ class Db:
         result = self.con.execute(sql)
         return [dict(zip(columns, row)) for row in result.fetchall()]
 
-class RawDb(Db):
+class RawTable(Table):
 
     def __init__(self, database, chroma_bins = 3 * 12, bands_count = 3):
         chroma_bins = chroma_bins
@@ -245,7 +245,21 @@ class RawDb(Db):
         columns = [('track_id', 'INTEGER NOT NULL'),
                    ('i', 'INTEGER NOT NULL'),
                    ('key', 'INTEGER NOT NULL')] + columns
-        Db.__init__(self, database, 'raw', columns)
+        Table.__init__(self, database, 'raw', columns)
+
+class TunedTable(Table):
+
+    def __init__(self, database, chroma_bins = 12, bands_count = 3):
+        chroma_bins = chroma_bins
+        bands_count = bands_count
+        columns = [('chroma_%d_%d' % (i, j),  'FLOAT NOT NULL')
+                   for i in range(bands_count)
+                   for j in range(chroma_bins)]
+        columns = [('track_id', 'INTEGER NOT NULL'),
+                   ('i', 'INTEGER NOT NULL'),
+                   ('key', 'INTEGER NOT NULL')] + columns
+        Table.__init__(self, database, 'tuned', columns)
+        
 
 # TODO: higher order
 class HMM:

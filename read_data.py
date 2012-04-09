@@ -64,6 +64,6 @@ if __name__ == '__main__':
     parser.add_argument('--db', default='tmp.db')
     args = parser.parse_args()
     reader = ChromaReader()
-    db = RawDb(args.db)
+    db = RawTable(args.db)
     db.create_table()
     insert_data(args.mp3, args.lab, reader, db)

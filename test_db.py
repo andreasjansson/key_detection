@@ -6,13 +6,13 @@ import os.path as path
 import os
 import unittest
 
-class TestDb(unittest.TestCase):
+class TestTable(unittest.TestCase):
 
     def setUp(self):
         self.db_file = 'test.db'
         if path.exists(self.db_file):
             os.unlink(self.db_file)
-        self.db = Db(self.db_file, 'test', [('col1', 'INTEGER'), ('col2', 'VARCHAR(100)')])
+        self.db = Table(self.db_file, 'test', [('col1', 'INTEGER'), ('col2', 'VARCHAR(100)')])
         self.db.create_table()
         self.db.insert([123, 'abc'])
         self.db.insert([456, 'def'])

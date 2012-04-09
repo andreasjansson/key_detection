@@ -1,8 +1,9 @@
 from util import *
+import argparse
 
 class Processor:
 
-    def __init__(self, input_db = RawDb('data.db'), keymap = simple_keymap):
+    def __init__(self, input_db = RawTable('data.db'), keymap = simple_keymap):
         self.input_db = input_db
         self.keymap = simple_keymap
 
@@ -41,7 +42,7 @@ class Processor:
             yield rows
             track_id += 1
 
-    def tune(self, output_writer = TunedDb('data.db'), bins_per_pitch = 3, bands = 3):
+    def tune(self, output_writer = TunedTable('data.db'), bins_per_pitch = 3, bands = 3):
         tuner = Tuner(bins_per_pitch, bands)
         column_names
         for rows in self.rows_by_track(column_names):
@@ -51,3 +52,7 @@ class Processor:
 
     def get_chromagrams():
         pass
+
+
+if __name__ == '__main__':
+    

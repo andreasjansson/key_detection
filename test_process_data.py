@@ -17,7 +17,7 @@ class ProcessDataTest(unittest.TestCase):
     def test_rows_by_track(self):
         processor = Processor()
         for rows in processor.rows_by_track():
-            print(rows)
+            print(len(rows))
 
 if __name__ == '__main__':
     unittest.main()

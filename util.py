@@ -11,6 +11,7 @@ from scipy.spatial.distance import cosine
 import sqlite3 as sqlite
 import sys
 import string
+from copy import copy
 
 class Key:
     def __init__(self, key, time):
@@ -298,8 +299,55 @@ class HMM:
 
 class Tuner:
 
-    def tune_chromas(self, chromas):
-        pass
+    def __init__(self, bins_per_pitch, bands, pitches = 12):
+        self.bins_per_pitch = bins_per_pitch
+        self.bands = bands
+        self.pitches = pitches
+
+    def tune(self, rows):
+        """
+        Tune multiple bands of chromagrams.
+        """
+        tuned_rows = []
+        max_bins = [0] * self.bins_per_pitch
+        for row in rows:
+            max_bins[self.get_max_bin(row)] += 1
+        # TODO: proper argmax
+        max_bin = max_bins.index(max(max_bins))
+        for row in rows:
+            tuned_row = self.tune_row(row, max_bin)
+            tuned_rows.append(tuned_row)
+        return tuned_rows
+
+    def get_max_bin(self, row):
+        bins = [0] * self.bins_per_pitch
+        for i, value in enumerate(row):
+            bins[i % self.bins_per_pitch] += value
+        return bins.index(max(bins))
+
+    def tune_row(self, row, max_bin):
+        tuned_row = []
+        for i in range(self.bands):
+            tuned_row += self.tune_band(
+                row[(i * self.pitches * self.bins_per_pitch) :
+                        ((i + 1) * self.pitches * self.bins_per_pitch)], max_bin)
+        return tuned_row
+
+    def tune_band(self, subchroma, max_bin):
+        subchroma = self.roll_chroma(subchroma, max_bin)
+        tuned_subchroma = [0] * self.pitches
+        for i, value in enumerate(subchroma):
+            tuned_subchroma[int(math.floor(i / self.bins_per_pitch))] += value
+        return tuned_subchroma
+
+    def roll_chroma(self, chroma, max_bin):
+        mid = math.floor(self.bins_per_pitch / 2)
+        if max_bin <= mid:
+            shift = mid - max_bin
+        else:
+            shift = max_bin
+        chroma = np.roll(chroma, int(shift)).tolist()
+        return chroma
 
 def dot_product(a, b):
     return sum(map(operator.mul, a, b))

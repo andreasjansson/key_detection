@@ -8,7 +8,7 @@ class Processor:
 
     # TODO: unit test
     def get_markov_matrix(self):
-        rows = self.db.select(['track_id', 'key'], order = 'track_id, i')
+        rows = self.input_db.select(['track_id', 'key'], order = 'track_id, i')
         key_count = len(self.keymap.keys()) 
         basic_markov = [0] * key_count
         prev_track = None
@@ -32,19 +32,22 @@ class Processor:
                     markov[i][j] /= colsum
         return markov
 
-    def rows_by_track(self):
+    def rows_by_track(self, column_names):
         track_id = 1
         while True:
-            rows = self.select(['*'], 'track_id = ' + track_id)
+            rows = self.input_db.select(['*'], 'track_id = ' + str(track_id))
             if not len(rows):
                 break
             yield rows
             track_id += 1
 
     def tune(self, output_writer = TunedDb('data.db'), bins_per_pitch = 3, bands = 3):
-        tuner = Tuner(bins_per_pitch)
-        for rows in self.rows_by_track():
-            print(rows)
+        tuner = Tuner(bins_per_pitch, bands)
+        column_names
+        for rows in self.rows_by_track(column_names):
+            tuned_rows = tuner.tune(rows)
+            for row in tuned_rows:
+                output_writer.insert(row)
 
     def get_chromagrams():
         pass

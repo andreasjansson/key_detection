@@ -198,6 +198,11 @@ class Table:
         self.cur.execute(sql)
         self.con.commit()
 
+    def truncate_table(self):
+        sql = 'DELETE FROM %s' % (self.table)
+        self.cur.execute(sql)
+        self.con.commit()
+
     def insert(self, row):
         expected_columns = len(self.columns) - 1 if self.auto_id else len(self.columns)
         if len(row) != expected_columns:
@@ -213,7 +218,7 @@ class Table:
         self.cur.execute(sql)
         self.con.commit()
 
-    def select(self, columns, where = None, order = None):
+    def select(self, columns, where = None, order = None, as_dict = True):
         table_columns = map(lambda x: x[0], self.columns)
         columns = map(string.strip, columns)
         columns = reduce(lambda x, y: x + (table_columns if y == '*' else [y]), columns, [])
@@ -232,20 +237,25 @@ class Table:
             ((', ').join(columns), self.table, where_clause, order_clause)
 
         result = self.con.execute(sql)
-        return [dict(zip(columns, row)) for row in result.fetchall()]
+        if as_dict:
+            return [dict(zip(columns, row)) for row in result.fetchall()]
+        else:
+            return result.fetchall()
 
 class RawTable(Table):
 
     def __init__(self, database, chroma_bins = 3 * 12, bands_count = 3):
-        chroma_bins = chroma_bins
-        bands_count = bands_count
-        columns = [('chroma_%d_%d' % (i, j),  'FLOAT NOT NULL')
-                   for i in range(bands_count)
-                   for j in range(chroma_bins)]
+        self.chroma_bins = chroma_bins
+        self.bands_count = bands_count
         columns = [('track_id', 'INTEGER NOT NULL'),
                    ('i', 'INTEGER NOT NULL'),
-                   ('key', 'INTEGER NOT NULL')] + columns
+                   ('key', 'INTEGER NOT NULL')] + self.get_chroma_columns()
         Table.__init__(self, database, 'raw', columns)
+
+    def get_chroma_columns(self):
+        return [('chroma_%d_%d' % (i, j),  'FLOAT NOT NULL')
+                for i in range(self.bands_count)
+                for j in range(self.chroma_bins)]
 
 class TunedTable(Table):
 

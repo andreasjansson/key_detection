@@ -36,7 +36,8 @@ class Processor:
     def rows_by_track(self, column_names):
         track_id = 1
         while True:
-            rows = self.input_db.select(['*'], 'track_id = ' + str(track_id))
+            rows = self.input_db.select(column_names, 'track_id = ' + str(track_id), 'i',
+                                        as_dict = False)
             if not len(rows):
                 break
             yield rows
@@ -44,15 +45,33 @@ class Processor:
 
     def tune(self, output_writer = TunedTable('data.db'), bins_per_pitch = 3, bands = 3):
         tuner = Tuner(bins_per_pitch, bands)
-        column_names
+        column_names = ['track_id', 'i', 'key'] + \
+            dict(self.input_db.get_chroma_columns()).keys()
         for rows in self.rows_by_track(column_names):
-            tuned_rows = tuner.tune(rows)
-            for row in tuned_rows:
-                output_writer.insert(row)
+            meta_rows = map(lambda x: x[:3], rows)
+            value_rows = map(lambda x: x[3:], rows)
+            tuned_rows = tuner.tune(value_rows)
+            for meta_row, tuned_row in zip(meta_rows, tuned_rows):
+                print("Inserting track: %d, i: %d" % (meta_row[0], meta_row[1]))
+                output_writer.insert(list(meta_row) + tuned_row)
 
     def get_chromagrams():
         pass
 
 
 if __name__ == '__main__':
-    
+    parser = argparse.ArgumentParser(description='Process chroma data.')
+    parser.add_argument("--tune", action = "store_true")
+    parser.add_argument("--db", default = "data.db")    
+    args = parser.parse_args()
+    if args.tune:
+        processor = Processor(RawTable(args.db))
+        tuned_table = TunedTable(args.db)
+        try:
+            tuned_table.create_table()
+        except:
+            tuned_table.truncate_table()
+        processor.tune(TunedTable(args.db))
+    else:
+        parser.error("Missing parameter")
+        print "hello"

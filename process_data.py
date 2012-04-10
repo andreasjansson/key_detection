@@ -35,14 +35,15 @@ class Processor:
 
     def get_chroma_mean(self, table = TunedTable('data.db'), bands = 3,
                         keymap = simple_keymap):
-        rows = table.iselect(['key'] + table.get_chroma_columns().keys(), as_dict = False)
+        rows = table.select(['key'] + dict(table.get_chroma_columns()).keys(),
+                            as_dict = False)
         totals = {}
         for row in rows:
             offset, base = get_key_base(row[0], keymap)
             values = row[1:]
             values = roll_bands(values, offset, bands)
             if base not in totals:
-                totals[base] = [0] * 12
+                totals[base] = [0] * (12 * bands)
             for i, value in enumerate(values):
                 totals[base][i] += value
         for key in totals:

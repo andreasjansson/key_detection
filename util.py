@@ -134,9 +134,12 @@ class Chromagram:
 simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
                  'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,
                  'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11,
-                 'C:minor': 3, 'C#:minor': 4, 'Db:minor': 4, 'D:minor': 5, 'D#:minor': 6, 'nEb:minor': 6,
-                 'E:minor': 7, 'F:minor': 8, 'F#:minor': 9, 'Gb:minor': 9, 'G:minor': 10, 'G#:minor': 11,
-                 'Ab:minor': 11, 'A:minor': 0, 'A#:minor': 1, 'Bb:minor': 1, 'B:minor': 2, 'Silence': None}
+                 'C:minor': 3, 'C#:minor': 4, 'Db:minor': 4,
+                 'D:minor': 5, 'D#:minor': 6, 'nEb:minor': 6,
+                 'E:minor': 7, 'F:minor': 8, 'F#:minor': 9,
+                 'Gb:minor': 9, 'G:minor': 10, 'G#:minor': 11,
+                 'Ab:minor': 11, 'A:minor': 0, 'A#:minor': 1,
+                 'Bb:minor': 1, 'B:minor': 2, 'Silence': None}
 
 class LabParser:
 
@@ -242,34 +245,30 @@ class Table:
         else:
             return result.fetchall()
 
-class RawTable(Table):
+class ChromaTable(Table):
 
-    def __init__(self, database, chroma_bins = 3 * 12, bands_count = 3):
+    def __init__(self, database, chroma_bins, bands_count, table_name):
         self.chroma_bins = chroma_bins
         self.bands_count = bands_count
         columns = [('track_id', 'INTEGER NOT NULL'),
                    ('i', 'INTEGER NOT NULL'),
                    ('key', 'INTEGER NOT NULL')] + self.get_chroma_columns()
-        Table.__init__(self, database, 'raw', columns)
+        Table.__init__(self, database, table_name, columns)
 
     def get_chroma_columns(self):
         return [('chroma_%d_%d' % (i, j),  'FLOAT NOT NULL')
                 for i in range(self.bands_count)
                 for j in range(self.chroma_bins)]
 
-class TunedTable(Table):
+class RawTable(ChromaTable):
+
+    def __init__(self, database, chroma_bins = 3 * 12, bands_count = 3):
+        ChromaTable.__init__(self, database, chroma_bins, bands_count, 'raw')
+
+class TunedTable(ChromaTable):
 
     def __init__(self, database, chroma_bins = 12, bands_count = 3):
-        chroma_bins = chroma_bins
-        bands_count = bands_count
-        columns = [('chroma_%d_%d' % (i, j),  'FLOAT NOT NULL')
-                   for i in range(bands_count)
-                   for j in range(chroma_bins)]
-        columns = [('track_id', 'INTEGER NOT NULL'),
-                   ('i', 'INTEGER NOT NULL'),
-                   ('key', 'INTEGER NOT NULL')] + columns
-        Table.__init__(self, database, 'tuned', columns)
-        
+        ChromaTable.__init__(self, database, chroma_bins, bands_count, 'raw')
 
 # TODO: higher order
 class HMM:
@@ -390,6 +389,10 @@ def downsample(sig, factor):
     return sig2
 
 def get_key_base(key, keymap):
+
+    # for now, no distinction between major and minor.
+    return (0, key)
+
     if key == -1:
         return (-1, -1)
 
@@ -401,3 +404,19 @@ def get_key_base(key, keymap):
         base = 0
     offset = key - base
     return (base, offset)
+
+def roll_bands(values, offset, bands, bins = 12):
+    rolled_values = [0] * (bands * bins)
+    for b in range(bands):
+        for i in range(bins):
+            rolled_values[b * bins + ((i - offset) % bins)] = \
+                values[b * bins + i]
+    return rolled_values
+
+def set_implicit_keys(totals, keymap):
+    all_keys = sorted(set(keymap.values()))
+    for key in all_keys:
+        if key is not None:
+            base, _ = get_key_base(key, keymap)
+            totals[key] = np.roll(totals[base * 12], - key % 12).tolist()
+    return totals

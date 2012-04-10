@@ -33,6 +33,25 @@ class Processor:
                     markov[i][j] /= colsum
         return markov
 
+    def get_chroma_mean(self, table = TunedTable('data.db'), bands = 3,
+                        keymap = simple_keymap):
+        rows = table.iselect(['key'] + table.get_chroma_columns().keys(), as_dict = False)
+        totals = {}
+        for row in rows:
+            offset, base = get_key_base(row[0], keymap)
+            values = row[1:]
+            values = roll_bands(values, offset, bands)
+            if base not in totals:
+                totals[base] = [0] * 12
+            for i, value in enumerate(values):
+                totals[base][i] += value
+        for key in totals:
+            key_sum = sum(totals[key])
+            for i, value in enumerate(totals[key]):
+                totals[key][i] /= key_sum
+        totals = set_implicit_keys(totals, keymap)
+        return totals
+
     def rows_by_track(self, column_names):
         track_id = 1
         while True:

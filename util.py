@@ -134,7 +134,7 @@ class Chromagram:
 simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
                  'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,
                  'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11,
-                 'C:minor': 3, 'C#:minor': 4, 'Db:minor': 4, 'D:minor': 5, 'D#:minor': 6, 'Eb:minor': 6,
+                 'C:minor': 3, 'C#:minor': 4, 'Db:minor': 4, 'D:minor': 5, 'D#:minor': 6, 'nEb:minor': 6,
                  'E:minor': 7, 'F:minor': 8, 'F#:minor': 9, 'Gb:minor': 9, 'G:minor': 10, 'G#:minor': 11,
                  'Ab:minor': 11, 'A:minor': 0, 'A#:minor': 1, 'Bb:minor': 1, 'B:minor': 2, 'Silence': None}
 
@@ -388,3 +388,16 @@ def downsample(sig, factor):
     sig2 = np.convolve(sig, fir, mode="valid")
     sig2 = np.array([int(x) for i, x in enumerate(sig2) if i % factor == 0], dtype = sig.dtype)
     return sig2
+
+def get_key_base(key, keymap):
+    if key == -1:
+        return (-1, -1)
+
+    swap_keymap = dict((v, k) for k, v in keymap.iteritems())
+    name = swap_keymap[key]
+    if name.find(':minor'):
+        base = 12
+    else:
+        base = 0
+    offset = key - base
+    return (base, offset)

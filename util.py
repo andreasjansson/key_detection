@@ -12,8 +12,12 @@ import sqlite3 as sqlite
 import sys
 import string
 from copy import copy
+import matplotlib.pyplot as plt
+import simpl
 
-class Key:
+note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+
+class Key(object):
     def __init__(self, key, time):
         self.key = key
         self.time = time
@@ -21,7 +25,7 @@ class Key:
     def __str__(self):
         return "{0}: {1}".format(self.time, self.key)
 
-class Beat:
+class Beat(object):
     def __init__(self, beat, time):
         self.beat = beat
         self.time = time
@@ -30,7 +34,7 @@ class Beat:
         return "{0}: {1}".format(self.time, self.beat)
 
 
-class AudioReader:
+class AudioReader(object):
 
     def _process(self, samp_rate, stereo, length, downsample_factor):
 
@@ -79,7 +83,7 @@ class Mp3Reader(AudioReader):
             raise IOError('Failed to create wav file')
 
 
-class Template:
+class Template(object):
     def match(self, chromagram):
         max_score = float("-inf")
         max_i = -1
@@ -97,9 +101,9 @@ class BasicTemplate(Template):
         self.profile = np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1])
 
 
-class Chromagram:
+class Chromagram(object):
     """
-    This an n-bin multi-band chromagram tuned to 440Hz.
+    This an n-bin narrow-band chromagram tuned to 440Hz.
     """    
     def __init__(self, spectrum, samp_rate,
                  chroma_bins = 12, band_fqs = None):
@@ -107,12 +111,14 @@ class Chromagram:
         spectrum is only left half of the spectrum, so its length
         is signal_length / 2.
         """
+        self.chroma_bins = chroma_bins
         window_size = len(spectrum) * 2
+        samp_rate = float(samp_rate)
 
         if band_fqs is not None:
             band = map(lambda b: len(spectrum) * b / samp_rate, band_fqs)
-            subspectrum = spectrum[band[0]:band[1]]
-            freqs = np.arange(band[0], band[1]) * samp_rate / window_size
+            subspectrum = spectrum[int(band[0]):int(band[1])]
+            freqs = np.arange(band[0], band[1]) * 2 * samp_rate / window_size
         else:
             subspectrum = spectrum
             freqs = np.arange(0, len(spectrum)) * samp_rate / window_size
@@ -122,14 +128,40 @@ class Chromagram:
         for i, val in enumerate(subspectrum):
             freq = freqs[i]
             if freq > 0: # disregard dc offset
-                bin = round(chroma_bins * math.log(freq / c0, 2)) % chroma_bins
+                bin = int(round(chroma_bins * math.log(freq / c0, 2)) % chroma_bins)
                 self.values[bin] += val
 
-        if self.values.max() == 0:
-            self.values = np.zeros(chroma_bins)
-        else:
-            self.values = self.values / self.values.max()
+#        if self.values.max() == 0:
+#            self.values = np.zeros(chroma_bins)
+#        else:
+#            self.values = self.values / self.values.max()
+            
+    def plot(self):
+        plot_chroma(self.values, self.chroma_bins)
 
+def plot_chroma(values, chroma_bins = 12, show = True, yticks = True):
+    ind = np.arange(len(values))
+    plt.bar(ind, values)
+    xticks = reduce(lambda x, y: x + ([y] * (chroma_bins / 12)), note_names, [])
+    plt.xticks(ind + .4, xticks)
+    if not yticks:
+        plt.gca().axes.get_yaxis().set_visible(False)
+    if show:
+        plt.show()
+
+def plot_chromas(matrix, chroma_bins = 12):
+    root = math.sqrt(len(matrix))
+    cols = int(math.floor(root))
+    rows = int(math.ceil(len(matrix) / float(cols)))
+    for i, values in enumerate(matrix):
+        if isinstance(values, Chromagram):
+            print 'here'
+            values = values.values
+        row = int(math.floor(i / float(cols)))
+        col = i % cols
+        plt.subplot2grid((rows, cols), (row, col))
+        plot_chroma(values, show = False, yticks = False)
+    plt.show()
 
 simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
                  'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,
@@ -141,7 +173,7 @@ simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
                  'Ab:minor': 11, 'A:minor': 0, 'A#:minor': 1,
                  'Bb:minor': 1, 'B:minor': 2, 'Silence': None}
 
-class LabParser:
+class LabParser(object):
 
     def parse_keys(self, filename, keymap = simple_keymap):
         handle = open(filename, 'r')
@@ -171,7 +203,7 @@ class LabParser:
                 beats.append(Beat(beat, time))
         return beats
 
-class KeyLab:
+class KeyLab(object):
 
     def __init__(self, lab_file):
         self.keys = LabParser().parse_keys(lab_file)
@@ -183,7 +215,7 @@ class KeyLab:
                 return k.key
         return None
 
-class Table:
+class Table(object):
 
     def __init__(self, database, table, columns, auto_id = True):
         self.database = database
@@ -260,6 +292,10 @@ class ChromaTable(Table):
                 for i in range(self.bands_count)
                 for j in range(self.chroma_bins)]
 
+    def select_chroma(self, where = None, order = None, as_dict = True):
+        return self.select(dict(self.get_chroma_columns()).keys(), where, order, as_dict)
+        
+
 class RawTable(ChromaTable):
 
     def __init__(self, database, chroma_bins = 3 * 12, bands_count = 3):
@@ -271,7 +307,7 @@ class TunedTable(ChromaTable):
         ChromaTable.__init__(self, database, chroma_bins, bands_count, 'raw')
 
 # TODO: higher order
-class HMM:
+class HMM(object):
     """
     Basic 1st order HMM, can only compute Viterbi path.
     Takes a np matrix of trained profiles as emission inputs.
@@ -320,7 +356,7 @@ class HMM:
     def get_emission_probability(self, emission, state):
         return dot_product(emission, self.profiles[state])
 
-class Tuner:
+class Tuner(object):
 
     def __init__(self, bins_per_pitch, bands, pitches = 12):
         self.bins_per_pitch = bins_per_pitch
@@ -372,9 +408,46 @@ class Tuner:
         chroma = np.roll(chroma, int(shift)).tolist()
         return chroma
 
+class SpectrumQuantileFilter(object):
+
+    def __init__(self, quantile = 98):
+        self.quantile = quantile
+
+    def filter(self, spectrum):
+        spectrum = copy(spectrum)
+        sortspec = [(i, v) for i, v in enumerate(spectrum)]
+        sortspec.sort(key = operator.itemgetter(1))
+        q = int(len(sortspec) * (self.quantile / 100.0))
+        for i in range(q):
+            spectrum[sortspec[i][0]] = 0
+        return spectrum
+
+class SpectrumPeakFilter(object):
+
+    def __init__(self, audio, window_size = 8192,
+                 samp_rate = 11025, max_peaks = 20):
+        self.audio = audio
+        self.window_size = window_size
+        self.samp_rate = samp_rate
+        self.max_peaks = max_peaks
+
+    def filter(self, spectrum, frame):
+        spectrum = [0] * len(spectrum)
+        audio = self.audio[(self.window_size * frame):
+                               (self.window_size * (frame + 1))]
+        pd = simpl.SndObjPeakDetection()
+        pd.set_sampling_rate(self.samp_rate)
+        pd.max_peaks = self.max_peaks
+        frames = pd.find_peaks(audio)
+        for frame in frames:
+            for peak in frame.peaks:
+                freq = peak.frequency / 4
+                bin = int(freq * self.window_size / self.samp_rate)
+                spectrum[bin] += peak.amplitude * 32768.0
+            return spectrum
+
 def dot_product(a, b):
     return sum(map(operator.mul, a, b))
-
 
 def generate_spectrogram(audio, window_size):
     for t in xrange(0, len(audio), window_size):

@@ -1,13 +1,15 @@
 import util
 import matplotlib.pyplot as plt
-import np
+import numpy as np
 
-mp3 = '/home/andreas/music/The Beatles/Abbey_Road/11_Mean_Mr_Mustard.mp3'
+mp3 = '/home/andreas/music/The Beatles/Magical_Mystery_Tour/09_Penny_Lane.mp3'
 _, audio = util.Mp3Reader().read(mp3)
 s = [spectrum for (t, spectrum) in util.generate_spectrogram(audio, 8192)]
 #filt = util.SpectrumPeakFilter(audio)
 #sf = [filt.filter(x, i) for i, x in enumerate(s)]
-filt = util.SpectrumQuantileFilter(99)
+
+# using windowed quantile filter made a massive difference.
+filt = util.SpectrumQuantileFilter(98)
 sf = map(filt.filter, s)
 
 # show the effect of filtering
@@ -19,9 +21,17 @@ tuner = util.Tuner(3, 1)
 csv = [c.values for c in cs]
 t = tuner.tune(csv)
 util.plot_chromas(t[0:16])
+util.plot_chromas(t[16:32])
 
 # this isn't very good:
 # (think this proves that the traditional template-based approach
 # is broken, no matter which template you use)
 tt = np.array(t).sum(0)
-util.plot_chromas(tt)
+util.plot_chroma(tt)
+
+# looking at the plot before, it was much more obvious which key
+# we were in. let's see if normalising to max == 1 helps make a
+# more distinct chroma.
+sn = util.normalise_spectra(t)
+stt = np.array(sn[0:32]).sum(0)
+util.plot_chroma(stt)

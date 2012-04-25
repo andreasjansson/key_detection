@@ -410,17 +410,21 @@ class Tuner(object):
 
 class SpectrumQuantileFilter(object):
 
-    def __init__(self, quantile = 98):
+    def __init__(self, quantile = 99, window_width = 200):
         self.quantile = quantile
+        self.window_width = 200
 
     def filter(self, spectrum):
-        spectrum = copy(spectrum)
-        sortspec = [(i, v) for i, v in enumerate(spectrum)]
-        sortspec.sort(key = operator.itemgetter(1))
-        q = int(len(sortspec) * (self.quantile / 100.0))
-        for i in range(q):
-            spectrum[sortspec[i][0]] = 0
-        return spectrum
+        filtered = []
+        for i in range(0, len(spectrum), self.window_width):
+            subspec = list(spectrum[i:(i + self.window_width)])
+            sortspec = [(i, v) for i, v in enumerate(subspec)]
+            sortspec.sort(key = operator.itemgetter(1))
+            q = int(len(sortspec) * (self.quantile / 100.0))
+            for i in range(q):
+                subspec[sortspec[i][0]] = 0
+            filtered += subspec
+        return filtered
 
 class SpectrumPeakFilter(object):
 
@@ -454,6 +458,15 @@ def generate_spectrogram(audio, window_size):
         spectrum = abs(fft(audio[t:(t + window_size)]))
         spectrum = spectrum[0:len(spectrum) / 2]
         yield (t, spectrum)
+
+def normalise_spectra(spectra):
+    spectra = copy(spectra)
+    for i, spectrum in enumerate(spectra):
+        m = max(spectrum)
+        if(m > 0):
+            spectrum = (np.array(spectrum) / max(spectrum)).tolist()
+        spectra[i] = spectrum
+    return spectra
 
 def downsample(sig, factor):
     fir = signal.firwin(61, 1.0 / factor)

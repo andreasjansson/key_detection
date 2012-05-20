@@ -139,6 +139,35 @@ class Chromagram(object):
     def plot(self):
         plot_chroma(self.values, self.chroma_bins)
 
+def get_zweiklang(values):
+    # first, determine if it's a nullklang, einklang or zweiklang
+    sorted_values = np.sort(values)[::-1]
+    threshold = 0.2
+
+    # nullklang
+    if sorted_values[0] * threshold < sorted_values[1] and \
+            sorted_values[0] * threshold < sorted_values[2]:
+        return -1
+
+    # einklang
+    if sorted_values[0] * threshold > sorted_values[1] and \
+            sorted_values[0] * threshold > sorted_values[2]:
+        return np.where(values == sorted_values[0])[0][0]
+
+    # zweiklang
+    return 12 + 12 * np.where(values == sorted_values[0])[0][0] + \
+            np.where(values == sorted_values[1])[0][0]
+
+def zweiklang2name(zweiklang):
+    if zweiklang == -1:
+        return 'Nullklang'
+    if zweiklang < 12:
+        return note_names[zweiklang]
+    zweiklang -= 12
+    return note_names[int(zweiklang / 12)] + ', ' + \
+        note_names[zweiklang % 12]
+
+
 def plot_chroma(values, chroma_bins = 12, show = True, yticks = True):
     ind = np.arange(len(values))
     plt.bar(ind, values)
@@ -172,6 +201,7 @@ simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
                  'Gb:minor': 9, 'G:minor': 10, 'G#:minor': 11,
                  'Ab:minor': 11, 'A:minor': 0, 'A#:minor': 1,
                  'Bb:minor': 1, 'B:minor': 2, 'Silence': None}
+
 
 class LabParser(object):
 

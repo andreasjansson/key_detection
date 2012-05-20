@@ -20,8 +20,9 @@ cs = [util.Chromagram(ss, 44100 / 4, 36, (50, 500)) for ss in sf]
 tuner = util.Tuner(3, 1)
 csv = [c.values for c in cs]
 t = tuner.tune(csv)
-util.plot_chromas(t[0:16])
-util.plot_chromas(t[16:32])
+for i in range(0, len(t), 16):
+    util.plot_chromas(t[i:(i + 16)])
+    break
 
 # this isn't very good:
 # (think this proves that the traditional template-based approach
@@ -35,3 +36,18 @@ util.plot_chroma(tt)
 sn = util.normalise_spectra(t)
 stt = np.array(sn[0:32]).sum(0)
 util.plot_chroma(stt)
+
+# again, the raw template approach proves not that great.
+# there must be a way to take advantage of the sequential nature
+
+
+# Two types of clustering to discretise:
+# 1. K-means
+# 2. Pre-defined clusters of einklang und zweiklang
+
+
+# Write up what we discussed. Explain what each point means to me (as well as I understand).
+#  - Discretise with clustering algorithm above
+#  - Multiple "chord" candidates plus key context
+#  - Mixing higher and lower order Markov models
+#  - Hierarchical models working on different time scales

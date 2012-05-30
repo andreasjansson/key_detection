@@ -104,14 +104,30 @@ class BasicTemplate(Template):
 class Chromagram(object):
     """
     This an n-bin narrow-band chromagram tuned to 440Hz.
-    """    
-    def __init__(self, spectrum, samp_rate,
-                 chroma_bins = 12, band_fqs = None):
+    """
+
+    def __init__(self, values = None, chroma_bins = None):
+
+        if values is None:
+            self.values = np.zeros(chroma_bins)
+            self.chroma_bins = chroma_bins
+        elif len(values) < 2:
+            raise Exception('At least two values are required for a chromagram')
+        elif values is not None and chroma_bins is not None:
+            raise Exception('Please specify values or chroma_bins, not both.')
+        else:
+            self.values = values
+            self.chroma_bins = len(values)
+
+    @staticmethod
+    def from_spectrum(spectrum, samp_rate,
+                      chroma_bins = 12, band_fqs = None):
         """
         spectrum is only left half of the spectrum, so its length
         is signal_length / 2.
         """
-        self.chroma_bins = chroma_bins
+
+        chromagram = Chromagram(chroma_bins = chroma_bins)
         window_size = len(spectrum) * 2
         samp_rate = float(samp_rate)
 
@@ -123,73 +139,141 @@ class Chromagram(object):
             subspectrum = spectrum
             freqs = np.arange(0, len(spectrum)) * samp_rate / window_size
 
-        self.values = np.zeros(chroma_bins)
         c0 = 16.3516
         for i, val in enumerate(subspectrum):
             freq = freqs[i]
             if freq > 0: # disregard dc offset
-                bin = int(round(chroma_bins * math.log(freq / c0, 2)) % chroma_bins)
-                self.values[bin] += val
+                bin = int(round(chroma_bins * math.log(freq / c0, 2))) % chroma_bins
+                chromagram.values[bin] += math.sqrt(val)
 
-#        if self.values.max() == 0:
-#            self.values = np.zeros(chroma_bins)
-#        else:
-#            self.values = self.values / self.values.max()
-            
+        return chromagram
+
+    def normalise(self):
+        if self.values.max() == 0:
+            self.values = np.zeros(chroma_bins)
+        else:
+            self.values = self.values / self.values.max()
+
     def plot(self):
         plot_chroma(self.values, self.chroma_bins)
 
-def get_zweiklang(values):
-    # first, determine if it's a nullklang, einklang or zweiklang
-    sorted_values = np.sort(values)[::-1]
-    threshold = 0.2
+    def get_zweiklang(self, threshold = .1, silent = 100):
+        # first, determine if it's a nullklang, einklang or zweiklang
+        sorted_values = np.sort(self.values)[::-1]
 
-    # nullklang
-    if sorted_values[0] * threshold < sorted_values[1] and \
-            sorted_values[0] * threshold < sorted_values[2]:
+        if sorted_values[0] < silent:
+            return Nullklang()
+
+        if sorted_values[1] < silent:
+            return Einklang(np.where(self.values == sorted_values[0])[0][0])
+        
+        # zweiklang
+        if sorted_values[0] == sorted_values[1]:
+            first = np.where(self.values == sorted_values[0])[0][0]
+            second = np.where(self.values == sorted_values[0])[0][1]
+        else:
+            first = np.where(self.values == sorted_values[0])[0][0]
+            second = np.where(self.values == sorted_values[1])[0][0]
+
+        # likely to be noise if adjacent
+        if abs(second - first) == 1 or abs(second - first) == 11:
+            return Einklang(first)
+
+        return Zweiklang(first, second, self.chroma_bins)
+        
+
+        # old way:
+
+        # nullklang (ambiguous)
+        if sorted_values[0] * threshold < sorted_values[1] and \
+                sorted_values[0] * threshold < sorted_values[2]:
+            return Nullklang()
+
+        # einklang
+        if sorted_values[0] * threshold > sorted_values[1] and \
+                sorted_values[0] * threshold > sorted_values[2]:
+            return Einklang(np.where(self.values == sorted_values[0])[0][0])
+
+        # zweiklang
+        if sorted_values[0] == sorted_values[1]:
+            first = np.where(self.values == sorted_values[0])[0][0]
+            second = np.where(self.values == sorted_values[0])[0][1]
+        else:
+            first = np.where(self.values == sorted_values[0])[0][0]
+            second = np.where(self.values == sorted_values[1])[0][0]
+        return Zweiklang(first, second, self.chroma_bins)
+
+    def plot(self, show = True, yticks = True):
+        ind = np.arange(len(self.values))
+        plt.bar(ind, self.values)
+        xticks = reduce(lambda x, y: x + ([y] * (self.chroma_bins / 12)), note_names, [])
+        plt.xticks(ind + .4, xticks)
+        if not yticks:
+            plt.gca().axes.get_yaxis().set_visible(False)
+        if show:
+            plt.show()
+
+class Nklang(object):
+
+    def get_number(self):
+        raise NotImplementedError()
+
+    def get_name(self):
+        raise NotImplementedError()
+
+class Nullklang(Nklang):
+
+    def __init__(self):
+        pass
+
+    def get_name(self):
+        return '-'
+
+    def get_number(self):
         return -1
 
-    # einklang
-    if sorted_values[0] * threshold > sorted_values[1] and \
-            sorted_values[0] * threshold > sorted_values[2]:
-        return np.where(values == sorted_values[0])[0][0]
+class Einklang(Nklang):
 
-    # zweiklang
-    return 12 + 12 * np.where(values == sorted_values[0])[0][0] + \
-            np.where(values == sorted_values[1])[0][0]
+    def __init__(self, n):
+        self.n = n
+    
+    def get_name(self):
+        return note_names[self.n]
 
-def zweiklang2name(zweiklang):
-    if zweiklang == -1:
-        return 'Nullklang'
-    if zweiklang < 12:
-        return note_names[zweiklang]
-    zweiklang -= 12
-    return note_names[int(zweiklang / 12)] + ', ' + \
-        note_names[zweiklang % 12]
+    def get_number(self):
+        return self.n
 
+class Zweiklang(Nklang):
 
-def plot_chroma(values, chroma_bins = 12, show = True, yticks = True):
-    ind = np.arange(len(values))
-    plt.bar(ind, values)
-    xticks = reduce(lambda x, y: x + ([y] * (chroma_bins / 12)), note_names, [])
-    plt.xticks(ind + .4, xticks)
-    if not yticks:
-        plt.gca().axes.get_yaxis().set_visible(False)
-    if show:
-        plt.show()
+    def __init__(self, first, second, chroma_bins = 12):
+        if first is not None and second is not None and first > second:
+            self.first = second
+            self.second = first
+        elif first is None and second is not None:
+            raise Exception('Only second is not allowed')
+        else:
+            self.first = first
+            self.second = second
+        self.chroma_bins = chroma_bins
+        
+    def get_name(self):
+        return note_names[self.first] + ', ' + note_names[self.second]
 
-def plot_chromas(matrix, chroma_bins = 12):
-    root = math.sqrt(len(matrix))
+    def get_number(self):
+        # since second > first, ret >= chroma_bins (condition for uniqueness
+        # wrt einklangs)
+        return self.first + self.chroma_bins * self.second
+        
+
+def plot_chromas(chromas, chroma_bins = 12):
+    root = math.sqrt(len(chromas))
     cols = int(math.floor(root))
-    rows = int(math.ceil(len(matrix) / float(cols)))
-    for i, values in enumerate(matrix):
-        if isinstance(values, Chromagram):
-            print 'here'
-            values = values.values
+    rows = int(math.ceil(len(chromas) / float(cols)))
+    for i, chroma in enumerate(chromas):
         row = int(math.floor(i / float(cols)))
         col = i % cols
         plt.subplot2grid((rows, cols), (row, col))
-        plot_chroma(values, show = False, yticks = False)
+        chroma.plot(show = False, yticks = False)
     plt.show()
 
 simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
@@ -393,54 +477,54 @@ class Tuner(object):
         self.bands = bands
         self.pitches = pitches
 
-    def tune(self, rows):
+    def tune(self, chromas):
         """
         Tune multiple bands of chromagrams.
         """
-        tuned_rows = []
+        tuned_chromas = []
         max_bins = [0] * self.bins_per_pitch
-        for row in rows:
-            max_bins[self.get_max_bin(row)] += 1
+        for chroma in chromas:
+            max_bins[self.get_max_bin(chroma)] += 1
         # TODO: proper argmax
         max_bin = max_bins.index(max(max_bins))
-        for row in rows:
-            tuned_row = self.tune_row(row, max_bin)
-            tuned_rows.append(tuned_row)
-        return tuned_rows
+        for chroma in chromas:
+            tuned_chroma = self.tune_chroma(chroma, max_bin)
+            tuned_chromas.append(tuned_chroma)
+        return tuned_chromas
 
-    def get_max_bin(self, row):
+    def get_max_bin(self, chroma):
         bins = [0] * self.bins_per_pitch
-        for i, value in enumerate(row):
+        for i, value in enumerate(chroma.values):
             bins[i % self.bins_per_pitch] += value
         return bins.index(max(bins))
 
-    def tune_row(self, row, max_bin):
-        tuned_row = []
+    def tune_chroma(self, chroma, max_bin):
+        tuned = []
         for i in range(self.bands):
-            tuned_row += self.tune_band(
-                row[(i * self.pitches * self.bins_per_pitch) :
+            tuned += self.tune_band(
+                chroma.values[(i * self.pitches * self.bins_per_pitch) :
                         ((i + 1) * self.pitches * self.bins_per_pitch)], max_bin)
-        return tuned_row
+        return Chromagram(tuned)
 
-    def tune_band(self, subchroma, max_bin):
-        subchroma = self.roll_chroma(subchroma, max_bin)
-        tuned_subchroma = [0] * self.pitches
-        for i, value in enumerate(subchroma):
-            tuned_subchroma[int(math.floor(i / self.bins_per_pitch))] += value
-        return tuned_subchroma
+    def tune_band(self, values, max_bin):
+        values = self.roll_values(values, max_bin)
+        tuned_values = [0] * self.pitches
+        for i, value in enumerate(values):
+            tuned_values[int(math.floor(i / self.bins_per_pitch))] += value
+        return tuned_values
 
-    def roll_chroma(self, chroma, max_bin):
+    def roll_values(self, values, max_bin):
         mid = math.floor(self.bins_per_pitch / 2)
         if max_bin <= mid:
             shift = mid - max_bin
         else:
             shift = max_bin
-        chroma = np.roll(chroma, int(shift)).tolist()
-        return chroma
+        values = np.roll(values, int(shift)).tolist()
+        return values
 
 class SpectrumQuantileFilter(object):
 
-    def __init__(self, quantile = 99, window_width = 200):
+    def __init__(self, quantile = 97, window_width = 200):
         self.quantile = quantile
         self.window_width = 200
 
@@ -485,7 +569,9 @@ def dot_product(a, b):
 
 def generate_spectrogram(audio, window_size):
     for t in xrange(0, len(audio), window_size):
-        spectrum = abs(fft(audio[t:(t + window_size)]))
+        # windowed spectrogram
+        actual_window_size = min(window_size, len(audio) - t)
+        spectrum = abs(fft(audio[t:(t + window_size)] * np.hanning(actual_window_size)))
         spectrum = spectrum[0:len(spectrum) / 2]
         yield (t, spectrum)
 

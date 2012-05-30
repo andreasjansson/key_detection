@@ -4,6 +4,7 @@ from scipy import fft
 import matplotlib.pylab as pylab
 import os
 import sys
+import numpy as np
 
 class TestChromagram(unittest.TestCase):
 
@@ -13,7 +14,7 @@ class TestChromagram(unittest.TestCase):
         reader = WavReader()
         samp_rate, signal = reader.read("tmp1.wav", downsample_factor = 4)
         window_size = 8192
-        spectrum = abs(fft(signal[0:window_size]))
+        spectrum = abs(fft(signal[0:window_size] * np.hanning(window_size)))
 
         #pylab.plot(spectrum)
         #pylab.show()
@@ -22,12 +23,13 @@ class TestChromagram(unittest.TestCase):
         bands = zip(divs[:-1], divs[1:])
 
         maxes = [[0, 11], [2, 5], [0, 2]]
+        b = 1
         for i, band in enumerate(bands):
             m = maxes[i]
-            chroma = Chromagram(spectrum, samp_rate, 12 * b, band).values
+            chroma = Chromagram.from_spectrum(spectrum, samp_rate, 12 * b, band).values
 
-            pylab.bar(range(12 * b), chroma)
-            pylab.show()
+            #pylab.bar(range(12 * b), chroma)
+            #pylab.show()
 
             order = np.argsort(chroma)
             top2 = np.sort(order[-2:])
@@ -39,17 +41,30 @@ class TestChromagram(unittest.TestCase):
         os.system("lame tmp.wav")
         reader = Mp3Reader()
         samp_rate, signal = reader.read("tmp.mp3")
-        spectrum = abs(fft(signal))[0:len(signal) / 2]
+        spectrum = abs(fft(signal * np.hanning(len(signal))))[0:len(signal) / 2]
 
-        chromagram = Chromagram(spectrum, samp_rate)
-
-        #pylab.bar(range(12), chromagram._values)
+        chromagram = Chromagram.from_spectrum(spectrum, samp_rate)
+        
+        #pylab.bar(range(12), chromagram.values)
         #pylab.show()
+
+        chromagram.normalise()
+        print map(lambda x: round(x, 3), chromagram.values)
 
         self.assertTrue(np.all(chromagram.values >
                                np.array([.5, 0, 0, 0, .5, 0, 0, .5, 0, 0, 0, 0])))
         self.assertTrue(np.all(chromagram.values <=
                                np.array([1, .5, .5, .5, 1, .5, .5, 1, .5, .5, .5, .5])))
+
+    def test_zweiklang(self):
+        c = Chromagram(np.array([0, .8, .9, 1]))
+        self.assertEquals(-1, c.get_zweiklang().get_number())
+
+        c = Chromagram(np.array([0, 1, 0]))
+        self.assertEquals(1, c.get_zweiklang().get_number())
+
+        c = Chromagram(np.array([0, 1, 0, 1]))
+        self.assertEquals(1 + 3 * 4, c.get_zweiklang().get_number())
 
 if __name__ == '__main__':
     unittest.main()

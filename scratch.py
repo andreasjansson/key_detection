@@ -62,13 +62,38 @@ ts = tuner.tune(cs)
 # there must be a way to take advantage of the sequential nature
 
 
-# TODO UPNEXT: This is still not great, need to figure out where it breaks, and why.
-# Also try multiple bands.
 for t in ts:
     print "%-10s%.0f" % (t.get_zweiklang().get_name(), sum(t.values))
 
 
+# TODO UPNEXT: implement these
 
+def get_klangs(mp3):
+    _, audio = util.Mp3Reader().read(mp3)
+    s = [spectrum for (t, spectrum) in util.generate_spectrogram(audio, 8192)]
+
+    filt = util.SpectrumQuantileFilter(98)
+    sf = map(filt.filter, s)
+
+    bins = 3
+    cs = [util.Chromagram.from_spectrum(ss, 44100 / 4, 12 * bins, (50, 500)) for ss in sf]
+
+    tuner = util.Tuner(bins, 1)
+    ts = tuner.tune(cs)
+
+    return [t.get_zweiklang() for t in ts]
+
+def get_emission_matrices(lab, klangs):
+    '''
+    Return one or two matrices in a dict
+    keyed by mode.
+    '''
+    pass
+
+class KeyHMM:
+
+    def __init__(self, emission_matrices):
+        pass
 
 # training
 

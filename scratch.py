@@ -68,6 +68,28 @@ for t in ts:
     print "%-10s%.0f" % (t.get_zweiklang().get_name(), sum(t.values))
 
 
+
+
+# training
+
+emission_matrices = [np.matrix(12, 12), np.matrix(12, 12)]
+
+# end up with one major and one minor matrix
+for lab, mp3 in files:
+    klangs = get_klangs(mp3)
+    matrices = get_emission_matrices(lab, klangs)
+    for mode, m in matrices:
+        emission_matrices[mode] += m
+
+
+# new data
+
+hmm = KeyHMM(emission_matrices)
+klangs = get_klangs(new_mp3)
+keys = hmm.viterbi(klangs)
+
+
+
 # Two types of clustering to discretise:
 # 1. K-means
 # 2. Pre-defined clusters of einklang und zweiklang

@@ -18,12 +18,23 @@ import simpl
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
 class Key(object):
-    def __init__(self, key, time):
-        self.key = key
-        self.time = time
 
-    def __str__(self):
-        return "{0}: {1}".format(self.time, self.key)
+    def __init__(self, root):
+        self.root = root
+
+class MajorKey(Key):
+    pass
+
+class MinorKey(Key):
+    pass
+
+#class Key(object):
+#    def __init__(self, key, time):
+#        self.key = key
+#        self.time = time
+#
+#    def __str__(self):
+#        return "{0}: {1}".format(self.time, self.key)
 
 class Beat(object):
     def __init__(self, beat, time):
@@ -563,6 +574,17 @@ class SpectrumPeakFilter(object):
                 bin = int(freq * self.window_size / self.samp_rate)
                 spectrum[bin] += peak.amplitude * 32768.0
             return spectrum
+
+class EmissionMatrix:
+
+    def __init__(self):
+        self.matrix = np.matrix(12, 12)
+
+    def add(self, fr0m, to):
+        self.matrix[fr0m, to] += 1
+
+    def get(self, fr0m, to):
+        return self.matrix[fr0m, to]
 
 def dot_product(a, b):
     return sum(map(operator.mul, a, b))

@@ -66,29 +66,41 @@ for t in ts:
     print "%-10s%.0f" % (t.get_zweiklang().get_name(), sum(t.values))
 
 
-# TODO UPNEXT: implement these
-
 def get_klangs(mp3):
+    fs = 11025
+    winlength = 8192
+
     _, audio = util.Mp3Reader().read(mp3)
-    s = [spectrum for (t, spectrum) in util.generate_spectrogram(audio, 8192)]
+    s = [spectrum for (t, spectrum) in util.generate_spectrogram(audio, winlength)]
 
     filt = util.SpectrumQuantileFilter(98)
     sf = map(filt.filter, s)
 
     bins = 3
-    cs = [util.Chromagram.from_spectrum(ss, 44100 / 4, 12 * bins, (50, 500)) for ss in sf]
+    cs = [util.Chromagram.from_spectrum(ss, fs / 4, 12 * bins, (50, 500)) for ss in sf]
 
     tuner = util.Tuner(bins, 1)
     ts = tuner.tune(cs)
 
-    return [t.get_zweiklang() for t in ts]
+    return [(i * winlength / fs, t.get_zweiklang()) for i, t in enumerate(ts)]
 
-def get_emission_matrices(lab, klangs):
+def get_emission_matrices(labs, klangs):
     '''
     Return one or two matrices in a dict
     keyed by mode.
     '''
-    pass
+    mwidth = 12 + 12 * 12
+    matrices = [np.zeros(shape = (mwidth, mwidth)) for i in [0, 1]]
+    prev_klang = None
+    prev_key = None
+    for t, klang in klangs:
+        key = key_at_time(labs, t)
+        klang = transpose_klang(klang, key.root)
+        if prev_klang and prev_key == key:
+            matrices[key.mode][prev_klang][klang] += 1
+        prev_klang = klang
+        prev_key = key
+    return matrices
 
 class KeyHMM:
 

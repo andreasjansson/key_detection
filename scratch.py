@@ -84,46 +84,40 @@ def get_klangs(mp3):
 
     return [(i * winlength / fs, t.get_zweiklang()) for i, t in enumerate(ts)]
 
-def get_emission_matrices(labs, klangs):
+def get_markov_matrices(labs, klangs):
     '''
     Return one or two matrices in a dict
     keyed by mode.
     '''
     mwidth = 12 + 12 * 12
-    matrices = [np.zeros(shape = (mwidth, mwidth)) for i in [0, 1]]
+
+    # first, create single matrices for all major
+    # and minor keys, by transposing all klangs to C/Cm
+    major_matrix = MarkovMatrix(mwidth) #np.zeros(shape = (mwidth, mwidth))
+    minor_matrix = MarkovMatrix(mwidth)
     prev_klang = None
     prev_key = None
     for t, klang in klangs:
         key = key_at_time(labs, t)
-        klang = transpose_klang(klang, key.root)
+        klang = klang.transpose(key.root, 0)
         if prev_klang and prev_key == key:
-            matrices[key.mode][prev_klang][klang] += 1
+            if isinstance(key, MajorKey):
+                major_matrix.increment(prev_klang, klang)
+            elif isinstance(key, MajorKey):
+                minor_matrix.increment(prev_klang, klang) += 1
         prev_klang = klang
         prev_key = key
+
+    # then, build markov matrices for all keys
+    # first 12 are major, second 12 are minor
+    matrices = []
+    for i in range(12):
+        matrices.append(major_matrix.transpose_key(i))
+    for i in range(12):
+        matrices.append(minor_matrix.transpose_key(i))
+
     return matrices
 
-class KeyHMM:
-
-    def __init__(self, emission_matrices):
-        pass
-
-# training
-
-emission_matrices = [np.matrix(12, 12), np.matrix(12, 12)]
-
-# end up with one major and one minor matrix
-for lab, mp3 in files:
-    klangs = get_klangs(mp3)
-    matrices = get_emission_matrices(lab, klangs)
-    for mode, m in matrices:
-        emission_matrices[mode] += m
-
-
-# new data
-
-hmm = KeyHMM(emission_matrices)
-klangs = get_klangs(new_mp3)
-keys = hmm.viterbi(klangs)
 
 
 

@@ -243,6 +243,8 @@ class Nullklang(Nklang):
     def get_number(self):
         return -1
 
+# TODO: in order for the matrix to be 12*12 x 12*12,
+# get_number should return self.n ^ 2
 class Einklang(Nklang):
 
     def __init__(self, n):
@@ -585,6 +587,19 @@ class EmissionMatrix:
 
     def get(self, fr0m, to):
         return self.matrix[fr0m, to]
+
+class MarkovMatrix:
+
+    def __init__(self, width):
+        self.m = np.zeros(shape = (width, width))
+
+    def increment(self, x, y):
+        self.m[x][y] += 1
+
+    # "transpose" in the musical sense, not matrix transposition
+    def transpose_key(self, delta):
+        # TODO: UPNEXT
+        pass
 
 def dot_product(a, b):
     return sum(map(operator.mul, a, b))

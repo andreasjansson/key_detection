@@ -23,10 +23,16 @@ class Key(object):
         self.root = root
 
 class MajorKey(Key):
-    pass
+    def __eq__(self, other):
+        return isinstance(other, MajorKey) and self.root == other.root
+    def __repr__(self):
+        return '<MajorKey: %s>' % note_names[self.root]
 
 class MinorKey(Key):
-    pass
+    def __eq__(self, other):
+        return isinstance(other, MinorKey) and self.root == other.root
+    def __repr__(self):
+        return '<MinorKey: %s>' % note_names[self.root]
 
 #class Key(object):
 #    def __init__(self, key, time):
@@ -190,7 +196,7 @@ class Chromagram(object):
         if abs(second - first) == 1 or abs(second - first) == 11:
             return Einklang(first)
 
-        return Zweiklang(first, second, self.chroma_bins)
+        return Zweiklang(first, second)
         
 
         # old way:
@@ -212,7 +218,7 @@ class Chromagram(object):
         else:
             first = np.where(self.values == sorted_values[0])[0][0]
             second = np.where(self.values == sorted_values[1])[0][0]
-        return Zweiklang(first, second, self.chroma_bins)
+        return Zweiklang(first, second)
 
     def plot(self, show = True, yticks = True):
         ind = np.arange(len(self.values))
@@ -243,8 +249,12 @@ class Nullklang(Nklang):
     def get_number(self):
         return -1
 
-# TODO: in order for the matrix to be 12*12 x 12*12,
-# get_number should return self.n ^ 2
+    def transpose(self):
+        return Nullklang();
+
+    def __repr__(self):
+        return '<Nullklang>'
+
 class Einklang(Nklang):
 
     def __init__(self, n):
@@ -253,12 +263,19 @@ class Einklang(Nklang):
     def get_name(self):
         return note_names[self.n]
 
+    # effectively a zweiklang, with n1 == n2
     def get_number(self):
-        return self.n
+        return self.n + 12 * self.n
+
+    def transpose(self, delta):
+        return Einklang((self.n + delta) % 12)
+
+    def __repr__(self):
+        return '<Einklang: %s>' % note_names[self.n]
 
 class Zweiklang(Nklang):
 
-    def __init__(self, first, second, chroma_bins = 12):
+    def __init__(self, first, second):
         if first is not None and second is not None and first > second:
             self.first = second
             self.second = first
@@ -267,16 +284,19 @@ class Zweiklang(Nklang):
         else:
             self.first = first
             self.second = second
-        self.chroma_bins = chroma_bins
         
     def get_name(self):
         return note_names[self.first] + ', ' + note_names[self.second]
 
     def get_number(self):
-        # since second > first, ret >= chroma_bins (condition for uniqueness
-        # wrt einklangs)
-        return self.first + self.chroma_bins * self.second
+        return self.first + 12 * self.second
         
+    def transpose(self, delta):
+        return Zweiklang((self.first + delta) % 12, (self.second + delta) % 12)
+
+    def __repr__(self):
+        return '<Zweiklang: %s, %s>' % (note_names[self.first], note_names[self.second])
+
 
 def plot_chromas(chromas, chroma_bins = 12):
     root = math.sqrt(len(chromas))
@@ -289,15 +309,15 @@ def plot_chromas(chromas, chroma_bins = 12):
         chroma.plot(show = False, yticks = False)
     plt.show()
 
-simple_keymap = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
-                 'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,
-                 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11,
-                 'C:minor': 3, 'C#:minor': 4, 'Db:minor': 4,
-                 'D:minor': 5, 'D#:minor': 6, 'nEb:minor': 6,
-                 'E:minor': 7, 'F:minor': 8, 'F#:minor': 9,
-                 'Gb:minor': 9, 'G:minor': 10, 'G#:minor': 11,
-                 'Ab:minor': 11, 'A:minor': 0, 'A#:minor': 1,
-                 'Bb:minor': 1, 'B:minor': 2, 'Silence': None}
+simple_keymap = {'C': MajorKey(0), 'C#': MajorKey(1), 'Db': MajorKey(1), 'D': MajorKey(2), 'D#': MajorKey(3), 'Eb': MajorKey(3),
+                 'E': MajorKey(4), 'F': MajorKey(5), 'F#': MajorKey(6), 'Gb': MajorKey(6), 'G': MajorKey(7), 'G#': MajorKey(8),
+                 'Ab': MajorKey(8), 'A': MajorKey(9), 'A#': MajorKey(10), 'Bb': MajorKey(10), 'B': MajorKey(11),
+                 'C:minor': MinorKey(3), 'C#:minor': MinorKey(4), 'Db:minor': MinorKey(4),
+                 'D:minor': MinorKey(5), 'D#:minor': MinorKey(6), 'Eb:minor': MinorKey(6),
+                 'E:minor': MinorKey(7), 'F:minor': MinorKey(8), 'F#:minor': MinorKey(9),
+                 'Gb:minor': MinorKey(9), 'G:minor': MinorKey(10), 'G#:minor': MinorKey(11),
+                 'Ab:minor': MinorKey(11), 'A:minor': MinorKey(0), 'A#:minor': MinorKey(1),
+                 'Bb:minor': MinorKey(1), 'B:minor': MinorKey(2), 'Silence': None}
 
 
 class LabParser(object):
@@ -316,7 +336,7 @@ class LabParser(object):
             else:
                 key = None
             time = float(row[0])
-            keys.append(Key(key, time))
+            keys.append((key, time))
         handle.close()
         return keys
 
@@ -337,9 +357,9 @@ class KeyLab(object):
 
     def key_at(self, time):
         # brute force for now
-        for k in reversed(self.keys):
-            if k.time <= time:
-                return k.key
+        for (k, t) in reversed(self.keys):
+            if t <= time:
+                return k
         return None
 
 class Table(object):
@@ -577,29 +597,103 @@ class SpectrumPeakFilter(object):
                 spectrum[bin] += peak.amplitude * 32768.0
             return spectrum
 
-class EmissionMatrix:
+# class EmissionMatrix:
 
-    def __init__(self):
-        self.matrix = np.matrix(12, 12)
+#     def __init__(self):
+#         self.matrix = np.matrix(12, 12)
 
-    def add(self, fr0m, to):
-        self.matrix[fr0m, to] += 1
+#     def add(self, fr0m, to):
+#         self.matrix[fr0m, to] += 1
 
-    def get(self, fr0m, to):
-        return self.matrix[fr0m, to]
+#     def get(self, fr0m, to):
+#         return self.matrix[fr0m, to]
 
 class MarkovMatrix:
 
-    def __init__(self, width):
-        self.m = np.zeros(shape = (width, width))
+    def __init__(self, width = None):
+        if(width is not None):
+            self.m = np.zeros(shape = (width, width))
 
-    def increment(self, x, y):
+    @staticmethod
+    def from_matrix(m):
+        markov = MarkovMatrix()
+        markov.m = m
+        return markov
+
+    def increment(self, klang1, klang2):
+        x = klang1.get_number()
+        y = klang2.get_number()
         self.m[x][y] += 1
 
     # "transpose" in the musical sense, not matrix transposition
     def transpose_key(self, delta):
-        # TODO: UPNEXT
-        pass
+        m = np.roll(self.m, 1, 0)
+        m = np.roll(m, 1, 1)
+        return MarkovMatrix.from_matrix(m)
+
+    def print_summary(self):
+        seq = self.m.reshape(-1)
+        seq.sort()
+        seq = seq[::-1]
+        i = 0
+        while(seq[i] > 0 and i < len(seq)):
+            where = np.where(seq[i] == self.m)
+            for fr0m, to in zip(where[0], where[1]):
+                print '%s => %s: %d' % (klang_number_to_name(fr0m), klang_number_to_name(to), seq[0])
+            i += 1
+
+def get_klangs(mp3):
+    fs = 11025
+    winlength = 8192
+
+    _, audio = Mp3Reader().read(mp3)
+    s = [spectrum for (t, spectrum) in generate_spectrogram(audio, winlength)]
+
+    filt = SpectrumQuantileFilter(98)
+    sf = map(filt.filter, s)
+
+    bins = 3
+    cs = [Chromagram.from_spectrum(ss, fs / 4, 12 * bins, (50, 500)) for ss in sf]
+
+    tuner = Tuner(bins, 1)
+    ts = tuner.tune(cs)
+
+    return [(i * winlength / fs, t.get_zweiklang()) for i, t in enumerate(ts)]
+
+def get_markov_matrices(keylab, klangs):
+    '''
+    Return one or two matrices in a dict
+    keyed by mode.
+    '''
+    mwidth = 12 + 12 * 12
+
+    # first, create single matrices for all major
+    # and minor keys, by transposing all klangs to C/Cm
+    major_matrix = MarkovMatrix(mwidth) #np.zeros(shape = (mwidth, mwidth))
+    minor_matrix = MarkovMatrix(mwidth)
+    prev_klang = None
+    prev_key = None
+    for t, klang in klangs:
+        key = keylab.key_at(t)
+        if key is not None and prev_klang and prev_key == key and not isinstance(klang, Nullklang):
+            klang = klang.transpose(-key.root)
+            if isinstance(key, MajorKey):
+                major_matrix.increment(prev_klang, klang)
+            elif isinstance(key, MajorKey):
+                minor_matrix.increment(prev_klang, klang)
+        prev_klang = klang
+        prev_key = key
+
+    # then, build markov matrices for all keys
+    # first 12 are major, second 12 are minor
+    matrices = []
+    for i in range(12):
+        matrices.append(major_matrix.transpose_key(i))
+    for i in range(12):
+        matrices.append(minor_matrix.transpose_key(i))
+
+    return matrices
+
 
 def dot_product(a, b):
     return sum(map(operator.mul, a, b))
@@ -626,6 +720,9 @@ def downsample(sig, factor):
     sig2 = np.convolve(sig, fir, mode="valid")
     sig2 = np.array([int(x) for i, x in enumerate(sig2) if i % factor == 0], dtype = sig.dtype)
     return sig2
+
+def klang_number_to_name(number):
+    # TODO: UPNEXT
 
 def get_key_base(key, keymap):
 
@@ -659,3 +756,5 @@ def set_implicit_keys(totals, keymap):
             base, _ = get_key_base(key, keymap)
             totals[key] = np.roll(totals[base * 12], - key % 12).tolist()
     return totals
+
+

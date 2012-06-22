@@ -2,6 +2,12 @@ import util
 import matplotlib.pyplot as plt
 import numpy as np
 
+mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/09_When_I\'m_Sixty-Four.mp3'
+klangs = util.get_klangs(mp3)
+keylab = util.KeyLab("/home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/09_When_I'm_Sixty-Four.lab")
+matrices = util.get_markov_matrices(keylab, klangs)
+
+
 # The goal is to create a number of emissions that make sense to a human. I.e. a human can deduce
 # the key just by looking at the emissions. That way, we can use introspection to create an algorithm
 # that does the same thing.
@@ -65,58 +71,6 @@ ts = tuner.tune(cs)
 for t in ts:
     print "%-10s%.0f" % (t.get_zweiklang().get_name(), sum(t.values))
 
-
-def get_klangs(mp3):
-    fs = 11025
-    winlength = 8192
-
-    _, audio = util.Mp3Reader().read(mp3)
-    s = [spectrum for (t, spectrum) in util.generate_spectrogram(audio, winlength)]
-
-    filt = util.SpectrumQuantileFilter(98)
-    sf = map(filt.filter, s)
-
-    bins = 3
-    cs = [util.Chromagram.from_spectrum(ss, fs / 4, 12 * bins, (50, 500)) for ss in sf]
-
-    tuner = util.Tuner(bins, 1)
-    ts = tuner.tune(cs)
-
-    return [(i * winlength / fs, t.get_zweiklang()) for i, t in enumerate(ts)]
-
-def get_markov_matrices(labs, klangs):
-    '''
-    Return one or two matrices in a dict
-    keyed by mode.
-    '''
-    mwidth = 12 + 12 * 12
-
-    # first, create single matrices for all major
-    # and minor keys, by transposing all klangs to C/Cm
-    major_matrix = MarkovMatrix(mwidth) #np.zeros(shape = (mwidth, mwidth))
-    minor_matrix = MarkovMatrix(mwidth)
-    prev_klang = None
-    prev_key = None
-    for t, klang in klangs:
-        key = key_at_time(labs, t)
-        klang = klang.transpose(key.root, 0)
-        if prev_klang and prev_key == key:
-            if isinstance(key, MajorKey):
-                major_matrix.increment(prev_klang, klang)
-            elif isinstance(key, MajorKey):
-                minor_matrix.increment(prev_klang, klang) += 1
-        prev_klang = klang
-        prev_key = key
-
-    # then, build markov matrices for all keys
-    # first 12 are major, second 12 are minor
-    matrices = []
-    for i in range(12):
-        matrices.append(major_matrix.transpose_key(i))
-    for i in range(12):
-        matrices.append(minor_matrix.transpose_key(i))
-
-    return matrices
 
 
 

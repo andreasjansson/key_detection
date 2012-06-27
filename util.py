@@ -689,9 +689,8 @@ def get_klangs(mp3 = None, audio = None):
 def get_aggregate_markov_matrices(filenames):
     aggregate_matrices = [MarkovMatrix(12 * 12) for i in range(12 * 2)]
     n = 1
-    total = len(aggregate_matrices)
     for keylab_file, mp3 in filenames:
-        print('Analysing %d/%d (%s)' % (n, total, mp3))
+        print('Analysing %d (%s)' % (n, mp3))
         klangs = get_klangs(mp3)
         keylab = KeyLab(keylab_file)
         matrices = get_markov_matrices(keylab, klangs)

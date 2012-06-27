@@ -14,6 +14,7 @@ import string
 from copy import copy
 import matplotlib.pyplot as plt
 import simpl
+import copy
 
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
@@ -627,26 +628,39 @@ class MarkovMatrix:
 
     # "transpose" in the musical sense, not matrix transposition
     def transpose_key(self, delta):
-        m = np.roll(self.m, 1, 0)
-        m = np.roll(m, 1, 1)
+        width = np.shape(self.m)[0]
+        m = np.roll(self.m, delta % width, 0)
+        m = np.roll(m, delta % width, 1)
         return MarkovMatrix.from_matrix(m)
 
-    def print_summary(self):
-        seq = self.m.reshape(-1)
+    def print_summary(self, max_lines = 20):
+        # fucking numpy mutability. side effects everywhere
+        # so need to copy all along.
+        m = copy.copy(self.m)
+        seq = m.reshape(-1)
         seq.sort()
-        seq = seq[::-1]
+        seq = np.unique(seq)[::-1]
         i = 0
+        lines = 0
         while(seq[i] > 0 and i < len(seq)):
             where = np.where(seq[i] == self.m)
             for fr0m, to in zip(where[0], where[1]):
-                print '%s => %s: %d' % (klang_number_to_name(fr0m), klang_number_to_name(to), seq[0])
+                print '%6s => %-6s: %d' % (klang_number_to_name(fr0m), klang_number_to_name(to), seq[i])
+                lines += 1
+                if lines > max_lines:
+                    return
             i += 1
 
-def get_klangs(mp3):
+    def __repr__(self):
+        s = np.shape(self.m)
+        return '<Matrix %dx%d sum %d>' % (s[0], s[1], np.sum(self.m))
+
+def get_klangs(mp3 = None, audio = None):
     fs = 11025
     winlength = 8192
 
-    _, audio = Mp3Reader().read(mp3)
+    if mp3:
+        _, audio = Mp3Reader().read(mp3)
     s = [spectrum for (t, spectrum) in generate_spectrogram(audio, winlength)]
 
     filt = SpectrumQuantileFilter(98)
@@ -665,32 +679,24 @@ def get_markov_matrices(keylab, klangs):
     Return one or two matrices in a dict
     keyed by mode.
     '''
-    mwidth = 12 + 12 * 12
+    mwidth = 12 * 12
 
-    # first, create single matrices for all major
-    # and minor keys, by transposing all klangs to C/Cm
-    major_matrix = MarkovMatrix(mwidth) #np.zeros(shape = (mwidth, mwidth))
-    minor_matrix = MarkovMatrix(mwidth)
+    # 12 major and 12 minor matrices
+    matrices = [MarkovMatrix(mwidth) for i in range(12 * 2)]
     prev_klang = None
     prev_key = None
     for t, klang in klangs:
         key = keylab.key_at(t)
-        if key is not None and prev_klang and prev_key == key and not isinstance(klang, Nullklang):
-            klang = klang.transpose(-key.root)
-            if isinstance(key, MajorKey):
-                major_matrix.increment(prev_klang, klang)
-            elif isinstance(key, MajorKey):
-                minor_matrix.increment(prev_klang, klang)
+        if key is not None and prev_klang is not None and prev_key == key and not isinstance(klang, Nullklang):
+            for i in range(12):
+                def t(klang):
+                    return klang.transpose(-key.root + i)
+                if isinstance(key, MajorKey):
+                    matrices[i].increment(t(prev_klang), t(klang))
+                elif isinstance(key, MinorKey):
+                    matrices[i + 12].increment(t(prev_klang), t(klang))
         prev_klang = klang
         prev_key = key
-
-    # then, build markov matrices for all keys
-    # first 12 are major, second 12 are minor
-    matrices = []
-    for i in range(12):
-        matrices.append(major_matrix.transpose_key(i))
-    for i in range(12):
-        matrices.append(minor_matrix.transpose_key(i))
 
     return matrices
 
@@ -722,7 +728,15 @@ def downsample(sig, factor):
     return sig2
 
 def klang_number_to_name(number):
-    # TODO: UPNEXT
+    if number == -1:
+        return 'Silence'
+    else:
+        first = number % 12
+        second = int(math.floor(number / 12))
+        if first == second:
+            return note_names[first]
+        else:
+            return note_names[first] + ', ' + note_names[second]
 
 def get_key_base(key, keymap):
 

@@ -651,6 +651,18 @@ class MarkovMatrix:
                     return
             i += 1
 
+    # mutable for performance
+    def add(self, other):
+        if np.shape(self.m) != np.shape(other.m):
+            raise Error('Cannot add markov matrices of different shapes')
+        width = np.shape(self.m)[0]
+        for i in range(width):
+            for j in range(width):
+                self.m[i][j] += other.m[i][j]
+
+    def similarity(self, other):
+        return np.dot(self.m.ravel(), other.m.ravel())
+
     def __repr__(self):
         s = np.shape(self.m)
         return '<Matrix %dx%d sum %d>' % (s[0], s[1], np.sum(self.m))
@@ -673,6 +685,20 @@ def get_klangs(mp3 = None, audio = None):
     ts = tuner.tune(cs)
 
     return [(i * winlength / fs, t.get_zweiklang()) for i, t in enumerate(ts)]
+
+def get_aggregate_markov_matrices(filenames):
+    aggregate_matrices = [MarkovMatrix(12 * 12) for i in range(12 * 2)]
+    n = 1
+    total = len(aggregate_matrices)
+    for keylab_file, mp3 in filenames:
+        print('Analysing %d/%d (%s)' % (n, total, mp3))
+        klangs = get_klangs(mp3)
+        keylab = KeyLab(keylab_file)
+        matrices = get_markov_matrices(keylab, klangs)
+        for i in range(24):
+            aggregate_matrices[i].add(matrices[i])
+        n += 1
+    return matrices
 
 def get_markov_matrices(keylab, klangs):
     '''
@@ -700,6 +726,29 @@ def get_markov_matrices(keylab, klangs):
 
     return matrices
 
+def get_test_matrix(mp3):
+    klangs = get_klangs(mp3)
+    matrix = MarkovMatrix(12 * 12)
+    prev_klang = None
+    for t, klang in klangs:
+        if prev_klang is not None and not isinstance(klang, Nullklang):
+            matrix.increment(prev_klang, klang)
+        prev_klang = klang
+    return matrix
+
+def get_key(training_matrices, test_matrix):
+    argmax = -1
+    maxsim = 0
+    for i, matrix in enumerate(training_matrices):
+        sim = matrix.similarity(test_matrix)
+        if sim > maxsim:
+            maxsim = sim
+            argmax = i
+    argmax = argmax % 24
+    if argmax < 12:
+        return MajorKey(argmax)
+    else:
+        return MinorKey(argmax - 12)
 
 def dot_product(a, b):
     return sum(map(operator.mul, a, b))

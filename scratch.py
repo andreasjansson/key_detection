@@ -2,23 +2,25 @@ import util
 import matplotlib.pyplot as plt
 import numpy as np
 
-
-mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/09_When_I\'m_Sixty-Four.mp3'
-_, audio = util.Mp3Reader.read(mp3)
-
-
-
-klangs = util.get_klangs(audio = audio)
-keylab = util.KeyLab("/home/andreas/data/beatles_annotations/keylab/the_beatles/Sgt._Pepper's_Lonely_Hearts_Club_Band/09_When_I'm_Sixty-Four.lab")
-matrices = util.get_markov_matrices(keylab, klangs)
-matrices[0].print_summary()
-
 # The goal is to create a number of emissions that make sense to a human. I.e. a human can deduce
 # the key just by looking at the emissions. That way, we can use introspection to create an algorithm
 # that does the same thing.
 
-#mp3 = '/home/andreas/music/The Beatles/Rubber_Soul/04_Nowhere_Man.mp3'
-#mp3 = '/home/andreas/music/The Beatles/Rubber_Soul/03_You_Won\'t_See_Me.mp3'
+training_filenames = [
+    ('/home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/04_Nowhere_Man.lab',
+     '/home/andreas/music/The Beatles/Rubber_Soul/04_Nowhere_Man.mp3'),
+#    ('/home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/03_You_Won\'t_See_Me.lab',
+#     '/home/andreas/music/The Beatles/Rubber_Soul/03_You_Won\'t_See_Me.mp3')
+    ]
+
+test_mp3 = '/home/andreas/music/The Beatles/Rubber_Soul/04_Nowhere_Man.mp3'
+
+training_matrices = util.get_aggregate_markov_matrices(training_filenames)
+test_matrix = util.get_test_matrix(test_mp3)
+
+key = util.get_key(training_matrices, test_matrix)
+
+
 #mp3 = '/home/andreas/music/The Beatles/Rubber_Soul/03_You_Won\'t_See_Me.mp3'
 #mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/10_Lovely_Rita.mp3'
 #mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/01_Sgt._Pepper\'s_Lonely_Hearts_Club_Band.mp3'
@@ -30,7 +32,7 @@ matrices[0].print_summary()
 #mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/05_Fixing_A_Hole.mp3'
 #mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/03_Lucy_In_The_Sky_With_Diamonds.mp3'
 #mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/07_Being_For_The_Benefit_Of_Mr._Kite!.mp3'
-mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/09_When_I\'m_Sixty-Four.mp3'
+#mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/09_When_I\'m_Sixty-Four.mp3'
 #mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/06_She\'s_Leaving_Home.mp3'
 #mp3 = '/home/andreas/music/The Beatles/Sgt._Pepper\'s_Lonely_Hearts_Club_Band/02_With_A_Little_Help_From_My_Friends.mp3'
 

@@ -1,0 +1,19 @@
+#!/usr/bin/python
+
+import util
+import pickle
+import argparse
+
+def summarise(model, limit = None):
+    model[0].print_summary(limit)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description = 'Key detector model inspector')
+    parser.add_argument('-i', '--infile', default = 'model.pkl')
+    parser.add_argument('--limit', default = 20, type = int)
+    args = parser.parse_args()
+
+    with open(args.infile, 'rb') as f:
+        model = pickle.load(f)
+
+    summarise(model, args.limit)

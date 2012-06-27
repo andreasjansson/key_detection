@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import util
 import argparse
 import os
@@ -42,8 +44,8 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--mp3dir', required = True)
     parser.add_argument('-l', '--labdir', required = True)
     parser.add_argument('-o', '--outfile', default = 'model.pkl')
-    parser.add_argument('--limit')
+    parser.add_argument('--limit', type = int)
     args = parser.parse_args()
-    matrices = train(args.mp3dir, args.labdir, int(args.limit))
+    matrices = train(args.mp3dir, args.labdir, args.limit)
     with open(args.outfile, 'wb') as outfile:
         pickle.dump(matrices, outfile)

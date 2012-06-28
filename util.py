@@ -1,5 +1,6 @@
 # TODO: test with different training sets;
 #       test with "handcoded" model
+#       why is yellow submarine tested as C# major!!!?
 
 import operator
 import tempfile

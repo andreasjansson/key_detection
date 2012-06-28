@@ -24,6 +24,8 @@ from copy import copy
 import matplotlib.pyplot as plt
 import simpl
 import copy
+import os.path as path
+from glob import glob
 
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
@@ -32,17 +34,117 @@ class Key(object):
     def __init__(self, root):
         self.root = root
 
-class MajorKey(Key):
+    def __hash__(self):
+        return self.root
+
     def __eq__(self, other):
-        return isinstance(other, MajorKey) and self.root == other.root
+        return type(self) == type(other) and hash(self) == hash(other)
+
+    def compare(self, other):
+        if self == other:
+            return KeySame()
+
+        if type(self) == type(other) and \
+                ((self.root - other.root) % 12 == 7 or \
+                     (other.root - self.root) % 12 == 7):
+            return KeyFifth()
+
+        if type(self) != type(other) and \
+                isinstance(other, Key) and \
+                self.root == other.root:
+            return KeyParallel()
+
+        return KeyOther()
+
+class MajorKey(Key):
+
     def __repr__(self):
         return '<MajorKey: %s>' % note_names[self.root]
 
+    def compare(self, other):
+        if isinstance(other, MinorKey) and \
+                (self.root - 3) % 12 == other.root:
+            return KeyRelative()
+        return Key.compare(self, other)
+    
 class MinorKey(Key):
-    def __eq__(self, other):
-        return isinstance(other, MinorKey) and self.root == other.root
+
     def __repr__(self):
         return '<MinorKey: %s>' % note_names[self.root]
+
+    def compare(self, other):
+        if isinstance(other, MajorKey) and \
+                (self.root + 3) % 12 == other.root:
+            return KeyRelative()
+        return Key.compare(self, other)
+
+
+# Based on http://www.music-ir.org/mirex/wiki/2012:Audio_Key_Detection#Evaluation_Procedures
+
+class KeyDiff(object):
+    def __hash__(self):
+        return 0
+    def __eq__(self, other):
+        return type(self) == type(other) and hash(self) == hash(other)
+
+class KeySame(KeyDiff):
+    def score(self):
+        return 1.0
+    def name(self):
+        return 'Same'
+
+class KeyFifth(KeyDiff):
+    def score(self):
+        return 0.5
+    def name(self):
+        return 'Perfect Fifth'
+
+class KeyRelative(KeyDiff):
+    def score(self):
+        return 0.3
+    def name(self):
+        return 'Relative Major/Minor'
+
+class KeyParallel(KeyDiff):
+    def score(self):
+        return 0.2
+    def name(self):
+        return 'Parallel Major/Minor'
+
+class KeyOther(KeyDiff):
+    def score(self):
+        return 0.0
+    def name(self):
+        return 'Other'
+
+
+class Scoreboard(object):
+
+    def __init__(self):
+        self.diffs = {
+            KeySame(): 0,
+            KeyFifth(): 0,
+            KeyRelative(): 0,
+            KeyParallel(): 0,
+            KeyOther(): 0
+            }
+
+    def add(self, diff):
+        self.diffs[diff] += 1
+
+    def get_score(self):
+        score = 0
+        for diff, count in self.diffs.iteritems():
+            score += diff.score() * count
+        return score
+
+    def max_score(self):
+        return sum(self.diffs.values())
+
+    def print_scores(self):
+        print '\nTotal score: %f / %f\n' % (self.get_score(), self.max_score())
+        for diff, count in self.diffs.iteritems():
+            print '%s: %d' % (diff.name(), count)
 
 #class Key(object):
 #    def __init__(self, key, time):
@@ -345,8 +447,9 @@ class LabParser(object):
                     key = None
             else:
                 key = None
-            time = float(row[0])
-            keys.append((key, time))
+            start_time = float(row[0])
+            end_time = float(row[1])
+            keys.append((key, start_time, end_time))
         handle.close()
         return keys
 
@@ -367,10 +470,19 @@ class KeyLab(object):
 
     def key_at(self, time):
         # brute force for now
-        for (k, t) in reversed(self.keys):
+        for k, t, _ in reversed(self.keys):
             if t <= time:
                 return k
         return None
+
+    def majority_key(self):
+        time_per_key = {}
+        for key, start_time, end_time in self.keys:
+            if key not in time_per_key:
+                time_per_key[key] = end_time - start_time
+            else:
+                time_per_key[key] += end_time - start_time
+        return max(time_per_key, key = time_per_key.get)
 
 class Table(object):
 
@@ -621,7 +733,7 @@ class SpectrumPeakFilter(object):
 class MarkovMatrix:
 
     def __init__(self, width = None):
-        if(width is not None):
+        if width is not None:
             self.m = np.zeros(shape = (width, width))
 
     @staticmethod
@@ -676,6 +788,46 @@ class MarkovMatrix:
         s = np.shape(self.m)
         return '<Matrix %dx%d sum %d>' % (s[0], s[1], np.sum(self.m))
 
+def filenames_from_file(filename):
+    '''
+    Reads from a file with colon-separated (mp3_filename.mp3:lab_filename.lab)
+    lines.
+    '''
+    # TODO
+    pass
+
+def filenames_from_twin_directories(mp3_root, lab_root, limit = None):
+    '''
+    Requires the mp3_root and lab_root to have the exact same structure, with
+    identical filenames, except for the file extension
+    '''
+    mp3_folders = set(os.listdir(mp3_root))
+    lab_folders = set(os.listdir(lab_root))
+    shared_folders = mp3_folders.intersection(lab_folders)
+
+    i = 0
+    for folder in shared_folders:
+
+        mp3_folder = mp3_root + "/" + folder
+        lab_folder = lab_root + "/" + folder
+        mp3_files = set(map(lambda s: path.basename(s).replace(".mp3", ""),
+                            glob(mp3_folder + "/*.mp3")))
+        lab_files = set(map(lambda s: path.basename(s).replace(".lab", ""),
+                            glob(lab_folder + "/*.lab")))
+
+        shared_files = mp3_files.intersection(lab_files)
+
+        for f in shared_files:
+
+            if limit is not None and i >= limit:
+                raise StopIteration
+
+            mp3_file = mp3_folder + "/" + f + ".mp3"
+            lab_file = lab_folder + "/" + f + ".lab"
+            i += 1
+            yield (mp3_file, lab_file)
+
+
 def get_klangs(mp3 = None, audio = None):
     fs = 11025
     winlength = 8192
@@ -698,7 +850,7 @@ def get_klangs(mp3 = None, audio = None):
 def get_aggregate_markov_matrices(filenames):
     aggregate_matrices = [MarkovMatrix(12 * 12) for i in range(12 * 2)]
     n = 1
-    for keylab_file, mp3 in filenames:
+    for mp3, keylab_file in filenames:
         print('Analysing %d (%s)' % (n, mp3))
         klangs = get_klangs(mp3)
         keylab = KeyLab(keylab_file)
@@ -787,7 +939,7 @@ def normalise_spectra(spectra):
     spectra = copy(spectra)
     for i, spectrum in enumerate(spectra):
         m = max(spectrum)
-        if(m > 0):
+        if m > 0:
             spectrum = (np.array(spectrum) / max(spectrum)).tolist()
         spectra[i] = spectrum
     return spectra

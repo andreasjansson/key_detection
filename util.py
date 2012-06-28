@@ -766,7 +766,7 @@ class MarkovMatrix:
         while(seq[i] > 0 and i < len(seq)):
             where = np.where(seq[i] == self.m)
             for fr0m, to in zip(where[0], where[1]):
-                print '%6s => %-6s: %d' % (klang_number_to_name(fr0m), klang_number_to_name(to), seq[i])
+                print '%6s => %-6s: %.3f' % (klang_number_to_name(fr0m), klang_number_to_name(to), seq[i])
                 lines += 1
                 if lines > max_lines:
                     return
@@ -783,6 +783,11 @@ class MarkovMatrix:
 
     def similarity(self, other):
         return np.dot(self.m.ravel(), other.m.ravel())
+
+    def normalise(self):
+        max = np.max(self.m)
+        if max > 0:
+            self.m /= max
 
     def __repr__(self):
         s = np.shape(self.m)
@@ -858,6 +863,10 @@ def get_aggregate_markov_matrices(filenames):
         for i in range(24):
             aggregate_matrices[i].add(matrices[i])
         n += 1
+
+    for matrix in aggregate_matrices:
+        matrix.normalise()
+
     return aggregate_matrices
 
 def get_markov_matrices(keylab, klangs):

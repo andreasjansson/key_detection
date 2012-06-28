@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# TODO: multitread
+
 import util
 import argparse
 import os

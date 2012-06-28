@@ -4,16 +4,19 @@ import util
 import pickle
 import argparse
 
-def summarise(model, limit = None):
-    model[0].print_summary(limit)
+def test(model, mp3):
+    test_matrix = util.get_test_matrix(mp3)
+    key = util.get_key(model, test_matrix)
+    print key
+    return key
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Key detector model inspector')
     parser.add_argument('-m', '--model', default = 'model.pkl')
-    parser.add_argument('--limit', default = 20, type = int)
+    parser.add_argument('mp3')
     args = parser.parse_args()
 
     with open(args.model, 'rb') as f:
         model = pickle.load(f)
 
-    summarise(model, args.limit)
+    test(model, args.mp3)

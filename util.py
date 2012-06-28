@@ -1,3 +1,6 @@
+# TODO: test with different training sets;
+#       test with "handcoded" model
+
 import operator
 import tempfile
 import scipy.io.wavfile as wavfile
@@ -250,7 +253,7 @@ class Nullklang(Nklang):
     def get_number(self):
         return -1
 
-    def transpose(self):
+    def transpose(self, _):
         return Nullklang();
 
     def __repr__(self):
@@ -712,7 +715,12 @@ def get_markov_matrices(keylab, klangs):
     prev_key = None
     for t, klang in klangs:
         key = keylab.key_at(t)
-        if key is not None and prev_klang is not None and prev_key == key and not isinstance(klang, Nullklang):
+        print key, klang
+        if key is not None and \
+                prev_klang is not None and \
+                prev_key == key and \
+                not isinstance(klang, Nullklang) and \
+                not isinstance(prev_klang, Nullklang):
             for i in range(12):
                 def t(klang):
                     return klang.transpose(-key.root + i)
@@ -730,7 +738,9 @@ def get_test_matrix(mp3):
     matrix = MarkovMatrix(12 * 12)
     prev_klang = None
     for t, klang in klangs:
-        if prev_klang is not None and not isinstance(klang, Nullklang):
+        if prev_klang is not None and \
+                not isinstance(klang, Nullklang) and \
+                not isinstance(prev_klang, Nullklang):
             matrix.increment(prev_klang, klang)
         prev_klang = klang
     return matrix

@@ -7,8 +7,8 @@ import numpy as np
 # that does the same thing.
 
 training_filenames = [
-    ('/home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/04_Nowhere_Man.lab',
-     '/home/andreas/music/The Beatles/Rubber_Soul/04_Nowhere_Man.mp3'),
+    ('/home/andreas/data/beatles_annotations/keylab/the_beatles/Abbey_Road/02_Something.lab',
+     '/home/andreas/music/The Beatles/Abbey_Road/02_Something.mp3'),
 #    ('/home/andreas/data/beatles_annotations/keylab/the_beatles/Rubber_Soul/03_You_Won\'t_See_Me.lab',
 #     '/home/andreas/music/The Beatles/Rubber_Soul/03_You_Won\'t_See_Me.mp3')
     ]

@@ -721,13 +721,20 @@ def get_markov_matrices(keylab, klangs):
                 prev_key == key and \
                 not isinstance(klang, Nullklang) and \
                 not isinstance(prev_klang, Nullklang):
+
             for i in range(12):
+
                 def t(klang):
-                    return klang.transpose(-key.root + i)
+                    root = key.root
+                    if isinstance(key, MinorKey):
+                        root = (root - 3) % 12
+                    return klang.transpose(-root + i)
+
                 if isinstance(key, MajorKey):
                     matrices[i].increment(t(prev_klang), t(klang))
                 elif isinstance(key, MinorKey):
                     matrices[i + 12].increment(t(prev_klang), t(klang))
+
         prev_klang = klang
         prev_key = key
 

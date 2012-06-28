@@ -5,7 +5,10 @@ import pickle
 import argparse
 
 def summarise(model, limit = None):
+    print 'C major matrix:'
     model[0].print_summary(limit)
+    print '\nC minor matrix:'
+    model[12].print_summary(limit)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Key detector model inspector')

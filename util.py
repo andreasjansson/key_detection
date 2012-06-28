@@ -1,6 +1,11 @@
 # TODO: test with different training sets;
 #       test with "handcoded" model
 #       why is yellow submarine tested as C# major!!!?
+#       normalise matrices to 1, otherwise we'll never match minor keys
+#       find collection of annotated classical music (where the
+#         annotation format supports key, e.g. abc), synthesise with
+#         timidity and use these as training data. compare to
+#         beatles data.
 
 import operator
 import tempfile

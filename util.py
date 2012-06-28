@@ -700,7 +700,7 @@ def get_aggregate_markov_matrices(filenames):
         for i in range(24):
             aggregate_matrices[i].add(matrices[i])
         n += 1
-    return matrices
+    return aggregate_matrices
 
 def get_markov_matrices(keylab, klangs):
     '''
@@ -715,7 +715,7 @@ def get_markov_matrices(keylab, klangs):
     prev_key = None
     for t, klang in klangs:
         key = keylab.key_at(t)
-        print key, klang
+        #print key, klang # do this if verbose
         if key is not None and \
                 prev_klang is not None and \
                 prev_key == key and \

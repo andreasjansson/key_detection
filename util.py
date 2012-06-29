@@ -800,13 +800,21 @@ class Cache(object):
 
     def __init__(self, prefix, key):
         self.name = 'cache_%s_%s.pkl' % (prefix, hashlib.md5(key).hexdigest())
+        self._data = None
 
     def exists(self):
-        return path.exists(self.name)
+        return self.get() is not None
 
+    # handles broken pickle
     def get(self):
-        with open(self.name, 'r') as f:
-            return pickle.load(f)
+        if self._data is not None:
+            return self._data
+        try:
+            with open(self.name, 'r') as f:
+                self._data = pickle.load(f)
+                return self._data
+        except Exception:
+            return None
 
     def set(self, data):
         with open(self.name, 'wb') as f:
@@ -951,6 +959,8 @@ def get_test_matrix(mp3):
         prev_klang = klang
 
     cache.set(matrix)
+
+    matrix.normalise()
 
     return matrix
 

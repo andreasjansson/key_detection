@@ -26,6 +26,8 @@ import simpl
 import copy
 import os.path as path
 from glob import glob
+import hashlib
+import pickle
 
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
@@ -793,6 +795,24 @@ class MarkovMatrix:
         s = np.shape(self.m)
         return '<Matrix %dx%d sum %d>' % (s[0], s[1], np.sum(self.m))
 
+
+class Cache(object):
+
+    def __init__(self, prefix, key):
+        self.name = 'cache_%s_%s.pkl' % (prefix, hashlib.md5(key).hexdigest())
+
+    def exists(self):
+        return path.exists(self.name)
+
+    def get(self):
+        with open(self.name, 'r') as f:
+            return pickle.load(f)
+
+    def set(self, data):
+        with open(self.name, 'wb') as f:
+            pickle.dump(data, f)
+
+
 def filenames_from_file(filename):
     '''
     Reads from a file with colon-separated (mp3_filename.mp3:lab_filename.lab)
@@ -857,9 +877,16 @@ def get_aggregate_markov_matrices(filenames):
     n = 1
     for mp3, keylab_file in filenames:
         print('Analysing %d (%s)' % (n, mp3))
-        klangs = get_klangs(mp3)
-        keylab = KeyLab(keylab_file)
-        matrices = get_markov_matrices(keylab, klangs)
+
+        cache = Cache('training', '%s:%s' % (mp3, keylab_file))
+        if cache.exists():
+            matrices = cache.get()
+        else:
+            klangs = get_klangs(mp3)
+            keylab = KeyLab(keylab_file)
+            matrices = get_markov_matrices(keylab, klangs)
+            cache.set(matrices)
+
         for i in range(24):
             aggregate_matrices[i].add(matrices[i])
         n += 1
@@ -908,6 +935,11 @@ def get_markov_matrices(keylab, klangs):
     return matrices
 
 def get_test_matrix(mp3):
+
+    cache = Cache('test', mp3)
+    if cache.exists():
+        return cache.get()
+
     klangs = get_klangs(mp3)
     matrix = MarkovMatrix(12 * 12)
     prev_klang = None
@@ -917,6 +949,9 @@ def get_test_matrix(mp3):
                 not isinstance(prev_klang, Nullklang):
             matrix.increment(prev_klang, klang)
         prev_klang = klang
+
+    cache.set(matrix)
+
     return matrix
 
 def get_key(training_matrices, test_matrix):

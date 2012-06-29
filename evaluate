@@ -21,10 +21,10 @@ def evaluate(mp3dir, labdir, train_percent = 50, limit = None):
     model = util.get_aggregate_markov_matrices(training)
     scoreboard = util.Scoreboard()
     for mp3_file, lab_file in testing:
+        print '\nTesting ' + mp3_file
         lab = util.KeyLab(lab_file)
         actual_key = lab.majority_key()
         test_matrix = util.get_test_matrix(mp3_file)
-        print '\nTesting ' + mp3_file
         key = util.get_key(model, test_matrix)
         diff = actual_key.compare(key)
         print 'Predicted: %s; Actual: %s; Diff: %s' % (key, actual_key, diff.name())
@@ -37,7 +37,6 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--mp3dir', required = True)
     parser.add_argument('-l', '--labdir', required = True)
     parser.add_argument('-t', '--trainpercent', type = int, default = 50)
-    parser.add_argument('-r', '--recache', action = 'store_true')
     parser.add_argument('--limit', type = int)
     args = parser.parse_args()
     evaluate(args.mp3dir, args.labdir, args.trainpercent, args.limit)

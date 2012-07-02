@@ -27,6 +27,13 @@ def evaluate(mp3dir, labdir, train_percent = 50, limit = None, overlap = False):
     scoreboard = util.Scoreboard()
     for mp3_file, lab_file in testing:
         lab = util.KeyLab(lab_file)
+
+        # songs with multiple keys is very hard. too hard for
+        # this challenge.
+        if lab.key_count() > 1:
+            print '\n%s has more than one key (%s), skipping' % (lab_file, ', '.join(map(repr, lab.real_keys())))
+            continue
+
         actual_key = lab.majority_key()
 
         if actual_key is None:

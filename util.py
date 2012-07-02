@@ -17,17 +17,17 @@ import os
 import csv
 from scipy import fft
 from scipy.spatial.distance import cosine
-import sqlite3 as sqlite
+#import sqlite3 as sqlite
 import sys
 import string
 from copy import copy
-import matplotlib.pyplot as plt
-import simpl
+#import matplotlib.pyplot as plt
 import copy
 import os.path as path
 from glob import glob
 import hashlib
 import pickle
+import urllib
 
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
@@ -200,6 +200,7 @@ class Mp3Reader(AudioReader):
         the data signal is a downsampled, mono (left channel) version
         of the original signal.
         """
+
         wav_filename = tempfile.NamedTemporaryFile(suffix = '.wav', delete = False).name
         self._mp3_to_wav(mp3_filename, wav_filename)
         samp_rate, stereo = wavfile.read(wav_filename)
@@ -207,6 +208,9 @@ class Mp3Reader(AudioReader):
         return self._process(samp_rate, stereo, length, downsample_factor)
         
     def _mp3_to_wav(self, mp3_filename, wav_filename):
+        if mp3_filename.find('http') == 0:
+            mp3_filename = download(mp3_filename, '.mp3')
+        
         if not os.path.exists(mp3_filename):
             raise IOError('File not found')
         os.system("mpg123 -w \"" + wav_filename.replace('"', '\\"') + "\" \"" + mp3_filename.replace('"', '\\"') + "\" &> /dev/null")
@@ -486,6 +490,16 @@ class KeyLab(object):
                 time_per_key[key] += end_time - start_time
         return max(time_per_key, key = time_per_key.get)
 
+    def real_keys(self):
+        keys = []
+        for key in self.keys:
+            if key[0] is not None:
+                keys.append(key[0])
+        return keys
+
+    def key_count(self):
+        return len(self.real_keys())
+
 class Table(object):
 
     def __init__(self, database, table, columns, auto_id = True):
@@ -707,6 +721,7 @@ class SpectrumPeakFilter(object):
         self.max_peaks = max_peaks
 
     def filter(self, spectrum, frame):
+        import simpl
         spectrum = [0] * len(spectrum)
         audio = self.audio[(self.window_size * frame):
                                (self.window_size * (frame + 1))]
@@ -784,6 +799,8 @@ class MarkovMatrix:
                 self.m[i][j] += other.m[i][j]
 
     def similarity(self, other):
+        # better without sqrt it appears
+        # return np.dot(np.sqrt(self.m).ravel(), np.sqrt(other.m).ravel())
         return np.dot(self.m.ravel(), other.m.ravel())
 
     def normalise(self):
@@ -960,8 +977,6 @@ def get_test_matrix(mp3):
 
     cache.set(matrix)
 
-    matrix.normalise()
-
     return matrix
 
 def get_key(training_matrices, test_matrix):
@@ -1049,3 +1064,7 @@ def set_implicit_keys(totals, keymap):
     return totals
 
 
+def download(filename, suffix = ''):
+    tmp = tempfile.NamedTemporaryFile(suffix = suffix, delete = False).name
+    response = urllib.urlretrieve(filename, tmp)
+    return tmp

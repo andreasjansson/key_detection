@@ -30,10 +30,10 @@ import pickle
 import urllib
 import boto.s3.key
 import re
+import pdb
 
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 CACHING = False
-logger = None
 
 class Key(object):
 
@@ -45,6 +45,9 @@ class Key(object):
 
     def __eq__(self, other):
         return type(self) == type(other) and hash(self) == hash(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def compare(self, other):
         if self == other:
@@ -542,6 +545,7 @@ class LilyKeyLab(KeyLab):
             'dis':  3,
             'ds':   3,
             'dd':   3,
+            'es':   3,
             'eb':   3,
             'ef':   3,
             'ees':  3,
@@ -572,6 +576,7 @@ class LilyKeyLab(KeyLab):
             'bb':   10,
             'bf':   10,
             'bes':  10,
+            'h':    11,
             'bis':  0,
             'bs':   0,
             'bd':   0,
@@ -598,13 +603,11 @@ class LilyKeyLab(KeyLab):
             'sid':  0,
             }
 
-        regex = re.compile('\\\key +([a-z]+) *\\\(major|minor)+')
-        matches = regex.finditer(text)
+        matches = re.finditer('\\\key +([a-z]+) *\\\(major|minor)+', text)
         key = prev_key = None
 
         for match in matches:
-            keyname = match.groups(1)
-            mode = match.groups(2)
+            keyname, mode = match.groups()
             if not keyname in notemap:
                 return None
             if mode == 'major':
@@ -1037,21 +1040,25 @@ def get_training_matrices(mp3, keylab_file):
     if cache.exists():
         matrices = cache.get()
     else:
-        klangs = get_klangs(mp3)
         keylab = get_key_lab(keylab_file)
+
+        # no point doing lots of work if it won't
+        # give any results
+        if not keylab.is_valid():
+            return None
+
+        klangs = get_klangs(mp3)
         matrices = get_markov_matrices(keylab, klangs)
         cache.set(matrices)
-
-    if logger is not None:
-        logger.debug('Processed %s' % mp3)
 
     return matrices
 
 def aggregate_matrices(matrices_list):
     aggregate_matrices = [MarkovMatrix(12 * 12) for i in range(12 * 2)]
     for matrices in matrices_list:
-        for i in range(24):
-            aggregate_matrices[i].add(matrices[i])
+        if matrices is not None:
+            for i in range(24):
+                aggregate_matrices[i].add(matrices[i])
 
     for matrix in aggregate_matrices:
         matrix.normalise()
@@ -1226,7 +1233,3 @@ def s3_download(bucket, s3_filename):
     k.get_contents_to_file(local_file)
     local_file.close
     return local_file.name
-
-def set_logger(mylogger):
-    global logger
-    logger = mylogger

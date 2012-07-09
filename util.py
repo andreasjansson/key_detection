@@ -23,13 +23,17 @@ import string
 from copy import copy
 #import matplotlib.pyplot as plt
 import copy
-import os.path as path
+import os.path
 from glob import glob
 import hashlib
 import pickle
 import urllib
+import boto.s3.key
+import re
 
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+CACHING = False
+logger = None
 
 class Key(object):
 
@@ -144,7 +148,7 @@ class Scoreboard(object):
         return sum(self.diffs.values())
 
     def print_scores(self):
-        print '\nTotal score: %f / %f\n' % (self.get_score(), self.max_score())
+        print '\nTotal score: %.2f / %.2f (%.2f%%)\n' % (self.get_score(), self.max_score(), self.get_score() / self.max_score() * 100)
         for diff, count in self.diffs.iteritems():
             print '%s: %d' % (diff.name(), count)
 
@@ -210,7 +214,7 @@ class Mp3Reader(AudioReader):
     def _mp3_to_wav(self, mp3_filename, wav_filename):
         if mp3_filename.find('http') == 0:
             mp3_filename = download(mp3_filename, '.mp3')
-        
+
         if not os.path.exists(mp3_filename):
             raise IOError('File not found')
         os.system("mpg123 -w \"" + wav_filename.replace('"', '\\"') + "\" \"" + mp3_filename.replace('"', '\\"') + "\" &> /dev/null")
@@ -474,6 +478,9 @@ class KeyLab(object):
     def __init__(self, lab_file):
         self.keys = LabParser().parse_keys(lab_file)
 
+    def is_valid(self):
+        return self.keys is not None
+
     def key_at(self, time):
         # brute force for now
         for k, t, _ in reversed(self.keys):
@@ -499,6 +506,124 @@ class KeyLab(object):
 
     def key_count(self):
         return len(self.real_keys())
+
+class LilyKeyLab(KeyLab):
+
+    def __init__(self, filename):
+        with open(filename, 'r') as f:
+            self.key = self.grep_key(f.read())
+
+    def is_valid(self):
+        return self.key is not None
+
+    def key_at(self, time):
+        return self.key
+
+    def majority_key(self):
+        return self.key
+
+    def real_keys(self):
+        return [self.key]
+
+    def grep_key(self, text):
+
+        notemap = {
+            'cb':   11,
+            'cf':   11,
+            'ces':  11,
+            'c':    0,
+            'cis':  1,
+            'cs':   1,
+            'cd':   1,
+            'db':   1,
+            'df':   1,
+            'des':  1,
+            'd':    2,
+            'dis':  3,
+            'ds':   3,
+            'dd':   3,
+            'eb':   3,
+            'ef':   3,
+            'ees':  3,
+            'e':    4,
+            'eis':  5,
+            'ed':   5,
+            'fb':   4,
+            'ff':   4,
+            'fes':  4,
+            'f':    5,
+            'fis':  6,
+            'fs':   6,
+            'fd':   6,
+            'gb':   6,
+            'gf':   6,
+            'ges':  6,
+            'g':    7,
+            'gis':  8,
+            'gs':   8,
+            'gd':   8,
+            'ab':   8,
+            'af':   8,
+            'aes':  8,
+            'a':    9,
+            'ais':  10,
+            'as':   10,
+            'ad':   10,
+            'bb':   10,
+            'bf':   10,
+            'bes':  10,
+            'bis':  0,
+            'bs':   0,
+            'bd':   0,
+            'dob':  11,
+            'do':   0,
+            'dod':  1,
+            'reb':  1,
+            're':   2,
+            'red':  3,
+            'mib':  3,
+            'mi':   4,
+            'mid':  5,
+            'fab':  4,
+            'fa':   5,
+            'fad':  6,
+            'solb': 6,
+            'sol':  7,
+            'sold': 8,
+            'lab':  8,
+            'la':   9,
+            'lad':  10,
+            'sib':  10,
+            'si':   11,
+            'sid':  0,
+            }
+
+        regex = re.compile('\\\key +([a-z]+) *\\\(major|minor)+')
+        matches = regex.finditer(text)
+        key = prev_key = None
+
+        for match in matches:
+            keyname = match.groups(1)
+            mode = match.groups(2)
+            if not keyname in notemap:
+                return None
+            if mode == 'major':
+                key = MajorKey(notemap[keyname])
+            else:
+                key = MinorKey(notemap[keyname])
+            if prev_key is not None and key != prev_key:
+                return None
+            prev_key = key
+
+        return key
+
+def get_key_lab(filename):
+    name, extension = os.path.splitext(filename)
+    if extension == '.lab':
+        return KeyLab(filename)
+    elif extension == '.ly':
+        return LilyKeyLab(filename)
+    raise Exception("Don't have a KeyLab to deal with %s files" % extension)
 
 class Table(object):
 
@@ -820,10 +945,16 @@ class Cache(object):
         self._data = None
 
     def exists(self):
+        if not CACHING:
+            False
+
         return self.get() is not None
 
     # handles broken pickle
     def get(self):
+        if not CACHING:
+            return None
+
         if self._data is not None:
             return self._data
         try:
@@ -834,6 +965,9 @@ class Cache(object):
             return None
 
     def set(self, data):
+        if not CACHING:
+            return
+
         with open(self.name, 'wb') as f:
             pickle.dump(data, f)
 
@@ -860,9 +994,9 @@ def filenames_from_twin_directories(mp3_root, lab_root, limit = None):
 
         mp3_folder = mp3_root + "/" + folder
         lab_folder = lab_root + "/" + folder
-        mp3_files = set(map(lambda s: path.basename(s).replace(".mp3", ""),
+        mp3_files = set(map(lambda s: os.path.basename(s).replace(".mp3", ""),
                             glob(mp3_folder + "/*.mp3")))
-        lab_files = set(map(lambda s: path.basename(s).replace(".lab", ""),
+        lab_files = set(map(lambda s: os.path.basename(s).replace(".lab", ""),
                             glob(lab_folder + "/*.lab")))
 
         shared_files = mp3_files.intersection(lab_files)
@@ -884,6 +1018,7 @@ def get_klangs(mp3 = None, audio = None):
 
     if mp3:
         _, audio = Mp3Reader().read(mp3)
+
     s = [spectrum for (t, spectrum) in generate_spectrogram(audio, winlength)]
 
     filt = SpectrumQuantileFilter(98)
@@ -897,27 +1032,42 @@ def get_klangs(mp3 = None, audio = None):
 
     return [(i * winlength / fs, t.get_zweiklang()) for i, t in enumerate(ts)]
 
-def get_aggregate_markov_matrices(filenames):
+def get_training_matrices(mp3, keylab_file):
+    cache = Cache('training', '%s:%s' % (mp3, keylab_file))
+    if cache.exists():
+        matrices = cache.get()
+    else:
+        klangs = get_klangs(mp3)
+        keylab = get_key_lab(keylab_file)
+        matrices = get_markov_matrices(keylab, klangs)
+        cache.set(matrices)
+
+    if logger is not None:
+        logger.debug('Processed %s' % mp3)
+
+    return matrices
+
+def aggregate_matrices(matrices_list):
     aggregate_matrices = [MarkovMatrix(12 * 12) for i in range(12 * 2)]
-    n = 1
-    for mp3, keylab_file in filenames:
-        print('Analysing %d (%s)' % (n, mp3))
-
-        cache = Cache('training', '%s:%s' % (mp3, keylab_file))
-        if cache.exists():
-            matrices = cache.get()
-        else:
-            klangs = get_klangs(mp3)
-            keylab = KeyLab(keylab_file)
-            matrices = get_markov_matrices(keylab, klangs)
-            cache.set(matrices)
-
+    for matrices in matrices_list:
         for i in range(24):
             aggregate_matrices[i].add(matrices[i])
-        n += 1
 
     for matrix in aggregate_matrices:
         matrix.normalise()
+
+    return aggregate_matrices
+
+def get_aggregate_markov_matrices(filenames):
+    aggregate_matrices = [MarkovMatrix(12 * 12) for i in range(12 * 2)]
+    n = 1
+    matrices_list = []
+    for mp3, keylab_file in filenames:
+        print('Analysing %d (%s)' % (n, mp3))
+        matrices = get_training_matrices()
+        matrices_list.append(matrices)
+
+    aggregate_matrices = aggregate_matrices(matrices_list)
 
     return aggregate_matrices
 
@@ -1068,3 +1218,15 @@ def download(filename, suffix = ''):
     tmp = tempfile.NamedTemporaryFile(suffix = suffix, delete = False).name
     response = urllib.urlretrieve(filename, tmp)
     return tmp
+
+def s3_download(bucket, s3_filename):
+    local_file = tempfile.NamedTemporaryFile(suffix = os.path.splitext(s3_filename)[1], delete = False)
+    k = boto.s3.key.Key(bucket)
+    k.key = s3_filename
+    k.get_contents_to_file(local_file)
+    local_file.close
+    return local_file.name
+
+def set_logger(mylogger):
+    global logger
+    logger = mylogger

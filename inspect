@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import util
-import pickle
+import cPickle
 import argparse
 
 def summarise(model, limit = None):
@@ -17,6 +17,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     with open(args.model, 'rb') as f:
-        model = pickle.load(f)
+        model = cPickle.loads(f.readline().decode('string_escape'))
 
     summarise(model, args.limit)

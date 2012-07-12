@@ -1,48 +1,77 @@
 import util
-from mrjob.job import MRJob
-from mrjob.protocol import RawValueProtocol, PickleValueProtocol
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 import os
+import os.path
 import logging
-import mrjob.util
+import sys
+import cPickle
 
 #mrjob.util.log_to_stream(name='mrjob', debug = True)
 #logger = logging.getLogger('mrjob')
 
-class MRTrain(MRJob):
+def mapper(local_dir = None):
 
-    INPUT_PROTOCOL = RawValueProtocol
-    INTERNAL_PROTOCOL = PickleValueProtocol
-    OUTPUT_PROTOCOL = PickleValueProtocol
-
-    def mapper(self, _, filename):
-
-        mp3, lab = filename.split('::')
-
-        self.set_status('Will process %s' % mp3)
-        self.increment_counter('mappers', 'started')
-
+    if local_dir is None:
         conn = S3Connection()
         bucket = conn.get_bucket('andreasjansson')
-        mp3 = util.s3_download(bucket, mp3)
-        lab = util.s3_download(bucket, lab)
 
-        self.set_status('Downloaded to %s and %s' % (mp3, lab))
+    for line in sys.stdin:
+        line = line.split('\n')[0]
+        mp3, lab = line.split('::')
+
+        util.mr_status('Will process %s' % mp3)
+        util.mr_counter('mappers', 'started')
+
+        if local_dir:
+            mp3 = local_dir + mp3
+            lab = local_dir + lab
+            if not os.path.exists(mp3) or not os.path.exists(lab):
+                continue
+        else:
+            try:
+                mp3 = util.s3_download(bucket, mp3)
+                lab = util.s3_download(bucket, lab)
+            except Exception as e:
+                util.mr_status(str(e))
+                continue
+
+            util.mr_status('Downloaded to %s and %s' % (mp3, lab))
 
         matrices = util.get_training_matrices(mp3, lab)
 
-        self.increment_counter('mappers', 'finished')
+        util.mr_counter('mappers', 'finished')
 
-        os.unlink(mp3)
-        os.unlink(lab)
+        if local_dir is None:
+            os.unlink(mp3)
+            os.unlink(lab)
 
-        yield _, matrices
+        print util.mr_encode(matrices)
 
-    def reducer(self, _, matrices_list):
-        matrices = util.aggregate_matrices(matrices_list)
+def reducer(local_dir = None):
 
-        yield _, matrices
+    aggregate_matrices = [util.MarkovMatrix(12 * 12) for i in range(12 * 2)]
+    for line in sys.stdin:
+        line = line.split('\n')[0]
+
+        matrices = util.mr_decode(line)
+
+        if matrices is not None:
+            for i in range(24):
+                aggregate_matrices[i].add(matrices[i])
+
+    for matrix in aggregate_matrices:
+        matrix.normalise()
+
+    print util.mr_encode(aggregate_matrices)
 
 if __name__ == '__main__':
-    MRTrain.run()
+
+    import argparse
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--localdir', '-l')
+    parser.add_argument('action', choices = ['mapper', 'reducer'])
+    args = parser.parse_args()
+    globals()[args.action](args.localdir)
+ 

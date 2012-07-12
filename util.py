@@ -31,6 +31,7 @@ import urllib
 import boto.s3.key
 import re
 import pdb
+import cPickle
 
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 CACHING = False
@@ -1070,7 +1071,7 @@ def get_aggregate_markov_matrices(filenames):
     n = 1
     matrices_list = []
     for mp3, keylab_file in filenames:
-        print('Analysing %d (%s)' % (n, mp3))
+        #print('Analysing %d (%s)' % (n, mp3))
         matrices = get_training_matrices()
         matrices_list.append(matrices)
 
@@ -1091,6 +1092,7 @@ def get_markov_matrices(keylab, klangs):
     prev_key = None
     for t, klang in klangs:
         key = keylab.key_at(t)
+
         #print key, klang # do this if verbose
         if key is not None and \
                 prev_klang is not None and \
@@ -1231,5 +1233,18 @@ def s3_download(bucket, s3_filename):
     k = boto.s3.key.Key(bucket)
     k.key = s3_filename
     k.get_contents_to_file(local_file)
-    local_file.close
+    local_file.close()
     return local_file.name
+
+
+def mr_status(message):
+    sys.stderr.write('reporter:status:%s\n' % message)
+
+def mr_counter(group, counter, amount = 1):
+    sys.stderr.write('reporter:counter:%s,%s,%d\n' % (group, counter, amount))
+
+def mr_encode(data):
+    return cPickle.dumps(data).encode('string_escape')
+
+def mr_decode(line):
+    return cPickle.loads(line.decode('string_escape'))

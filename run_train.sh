@@ -1,1 +1,1 @@
-elastic-mapreduce --create  --alive --name "lily50 test" --num-instances 3 --json mr_train_job.json --bootstrap-action "s3://andreasjansson/mrjob/bootstrap/bootstrap.sh" --log-uri "s3://andreasjansson/mrjob/logs/" --debug -v
+elastic-mapreduce --create  --alive --name "lily50 test" --num-instances 1 --json mr_train_job.json --bootstrap-action "s3://andreasjansson/mrjob/bootstrap/bootstrap.sh" --log-uri "s3://andreasjansson/mrjob/logs/" --debug -v

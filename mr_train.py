@@ -7,6 +7,8 @@ import logging
 import sys
 import cPickle
 
+sys.path.append(os.path.dirname(__file__))
+
 #mrjob.util.log_to_stream(name='mrjob', debug = True)
 #logger = logging.getLogger('mrjob')
 

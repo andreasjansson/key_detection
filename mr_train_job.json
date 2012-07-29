@@ -3,16 +3,16 @@
         "Name": "Main flow",
         "ActionOnFailure": "TERMINATE_JOB_FLOW",
         "HadoopJarStep": {
-            "Jar": "/home/hadoop/contrib/streaming/hadoop-0.20.2-streaming.jar",
+            "Jar": "/home/hadoop/contrib/streaming/hadoop-streaming.jar",
             "Args": [
                 "-input",   "s3n://andreasjansson/mrjob/input/filenames.lily50.data",
                 "-output",  "s3n://andreasjansson/mrjob/output/matrices.lily50.pkl",
-                "-mapper",  "python mr_train.py map",
-                "-reducer", "python mr_train.py reduce",
-                "-cacheFile", "s3n://andreasjansson/mrjob/cache/util.py",
+                "-mapper",  "\"python /home/hadoop/python/mr_train.py mapper\"",
+                "-reducer", "\"python /home/hadoop/python/mr_train.py reducer\"",
                 "-jobconf", "mapred.map.tasks=5",
                 "-jobconf", "mapred.reduce.tasks=1",
-                "-jobconf", "mapred.compress.map.output=true"
+                "-jobconf", "mapred.compress.map.output=true",
+                "-cmdenv", "'PYTHONPATH=$PYTHONPATH:/home/hadoop/python'"
             ]
         }
     }

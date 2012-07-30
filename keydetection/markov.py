@@ -48,6 +48,11 @@ class MarkovMatrix:
         if max > 0:
             self.m /= max
 
+    # add up all columns to get the relative frequencies of the "to"
+    # values in the klang analysis. known bug: first klang is discarded.
+    def get_unmarkov_array(self):
+        return self.m.sum(axis = 0)
+
     def __repr__(self):
         s = np.shape(self.m)
         return '<Matrix %dx%d sum %d>' % (s[0], s[1], np.sum(self.m))
@@ -78,8 +83,8 @@ def aggregate_matrices(matrices_list):
             for i in range(24):
                 aggregate_matrices[i].add(matrices[i])
 
-    for matrix in aggregate_matrices:
-        matrix.normalise()
+#    for matrix in aggregate_matrices:
+#        matrix.normalise()
 
     return aggregate_matrices
 
@@ -92,36 +97,6 @@ def get_aggregate_markov_matrices(filenames):
         matrices_list.append(matrices)
 
     aggregates = aggregate_matrices(matrices_list)
-
-    return aggregates
-
-
-def get_pitch_classes(mp3, keylab):
-    cache = Cache('pitch_class_training', '%s:%s' % (mp3, keylab_file))
-    if cache.exists():
-        pitch_classes = cache.get()
-    else:
-        keylab = get_key_lab(keylab_file)
-
-        # no point doing lots of work if it won't
-        # give any results
-        if not keylab.is_valid():
-            return None
-
-        pitch_classes = get_klangs(mp3)
-        cache.set(pitch_classes)
-
-    return pitch_classes
-
-def get_aggregate_pitch_class_matrices(filenames):
-    aggregates = [MarkovMatrix(12) for i in range(12 * 2)]
-    n = 1
-    pitch_classes_list = []
-    for mp3, keylab_file in filenames:
-        pitch_classes = get_pitch_class(mp3, keylab_file)
-        pitch_classes_list.append(pitch_classes)
-
-    aggregates = aggregate_pitch_classes(pitch_classes_list)
 
     return aggregates
 
@@ -217,6 +192,19 @@ def get_key(training_matrices, test_matrix):
     else:
         return MinorKey(argmax - 12)
 
+def get_key_from_unmarkov_array(training_arrays, test_array):
+    argmax = -1
+    maxsim = 0
+    for i, array in enumerate(training_arrays):
+        sim = np.dot(array, test_array)
+        if sim > maxsim:
+            maxsim = sim
+            argmax = i
+    argmax = argmax % 24
+    if argmax < 12:
+        return MajorKey(argmax)
+    else:
+        return MinorKey(argmax - 12)
 
 def get_pitch_class_model():
     major_matrix = MarkovMatrix(12 * 12)

@@ -59,7 +59,6 @@ class Chromagram(object):
     def plot(self):
         plot_chroma(self.values, self.chroma_bins)
 
-    # TODO: differentiate between <C, E> and <E, C>
     def get_nklang(self, threshold = .1, silent = 100):
         # first, determine if it's a nullklang, einklang or zweiklang
         sorted_values = np.sort(self.values)[::-1]

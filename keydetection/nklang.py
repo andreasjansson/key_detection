@@ -45,12 +45,10 @@ class Einklang(Nklang):
 
 class Zweiklang(Nklang):
 
-    def __init__(self, first, second):
-        if first is not None and second is not None and first > second:
+    def __init__(self, first, second, sort = False):
+        if sort and first > second:
             self.first = second
             self.second = first
-        elif first is None and second is not None:
-            raise Exception('Only second is not allowed')
         else:
             self.first = first
             self.second = second

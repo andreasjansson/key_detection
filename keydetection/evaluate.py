@@ -24,7 +24,11 @@ class Scoreboard(object):
         return sum(self.diffs.values())
 
     def print_scores(self):
-        print '\nTotal score: %.2f / %.2f (%.2f%%)\n' % (self.get_score(), self.max_score(), self.get_score() / self.max_score() * 100)
+        score_percent = 0 if self.max_score() == 0 \
+            else self.get_score() / self.max_score() * 100
+
+        print '\nTotal score: %.2f / %.2f (%.2f%%)\n' % (
+            self.get_score(), self.max_score(), score_percent)
         for diff, count in self.diffs.iteritems():
             print '%s: %d' % (diff.name(), count)
 

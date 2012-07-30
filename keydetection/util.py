@@ -75,9 +75,11 @@ def s3_download(bucket, s3_filename):
     local_file.close()
     return local_file.name
 
-def split_filenames(filenames, split_percent = 50, limit = None, overlap = False):
+def split_filenames(filenames, split_percent = 50, limit = None, overlap = False,
+                    shuffle = True):
 
-    random.shuffle(filenames)
+    if shuffle:
+        random.shuffle(filenames)
     if limit:
         filenames = filenames[:limit]
 

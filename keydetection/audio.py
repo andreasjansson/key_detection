@@ -8,6 +8,7 @@ import os
 import sys
 import os.path
 from StringIO import StringIO
+import matplotlib.pyplot as plt
 
 from chroma import *
 
@@ -115,7 +116,7 @@ def get_klangs(mp3 = None, audio = None):
 
     s = [spectrum for (t, spectrum) in generate_spectrogram(audio, winlength)]
 
-    filt = SpectrumQuantileFilter(98)
+    filt = SpectrumQuantileFilter(99)
     sf = map(filt.filter, s)
 
     bins = 3
@@ -157,3 +158,22 @@ def downsample(sig, factor):
     sig2 = np.array([int(x) for i, x in enumerate(sig2) if i % factor == 0], dtype = sig.dtype)
     return sig2
 
+def plot_spectrum(spectrum, fs = 11025, zoom = None, clear = True,
+                  line = 'b-'):
+    if clear:
+        plt.clf()
+    plt.plot(spectrum, line)
+    fn = fs / 2
+
+    nticks = 10
+    if zoom is not None:
+        nticks = 10 / ((zoom[1] - zoom[0]) / float(fn))
+
+    plt.xticks(range(0, len(spectrum), int(math.ceil(len(spectrum) / nticks))), range(0, fn, int(math.ceil(fn / nticks))))
+    plt.yticks([])
+    if zoom is not None:
+        zoom[0] = zoom[0] / float(fn) * len(spectrum)
+        zoom[1] = zoom[1] / float(fn) * len(spectrum)
+        zoom[2] = zoom[2] * max(spectrum)
+        zoom[3] = zoom[3] * max(spectrum)
+        plt.axis(zoom)

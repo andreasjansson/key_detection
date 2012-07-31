@@ -1,7 +1,9 @@
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 from nklang import *
+from util import *
 
 class Chromagram(object):
     """
@@ -34,9 +36,9 @@ class Chromagram(object):
         samp_rate = float(samp_rate)
 
         if band_fqs is not None:
-            band = map(lambda b: len(spectrum) * b / samp_rate, band_fqs)
+            band = map(lambda b: window_size * b / samp_rate, band_fqs)
             subspectrum = spectrum[int(band[0]):int(band[1])]
-            freqs = np.arange(band[0], band[1]) * 2 * samp_rate / window_size
+            freqs = np.arange(band[0], band[1]) * samp_rate / window_size
         else:
             subspectrum = spectrum
             freqs = np.arange(0, len(spectrum)) * samp_rate / window_size
@@ -46,6 +48,7 @@ class Chromagram(object):
             freq = freqs[i]
             if freq > 0: # disregard dc offset
                 bin = int(round(chroma_bins * math.log(freq / c0, 2))) % chroma_bins
+                # TODO: document sqrt
                 chromagram.values[bin] += math.sqrt(val)
 
         return chromagram

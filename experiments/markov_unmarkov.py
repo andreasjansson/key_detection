@@ -8,7 +8,6 @@ sys.path.insert(0, os.path.abspath('..'))
 # e.g.:
 #   python markov_unmarkov.py /home/andreas/music/The\ Beatles /home/andreas/data/beatles_annotations/keylab/the_beatles
 
-import sys
 from keydetection import *
 
 filenames = [(mp3, lab) for mp3, lab in

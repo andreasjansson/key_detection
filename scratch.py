@@ -49,12 +49,12 @@ sf = map(filt.filter, s)
 #plt.show()
 
 bins = 3
-cs = [util.Chromagram.from_spectrum(ss, 44100 / 4, 12 * bins, (50, 500)) for ss in sf]
-tuner = util.Tuner(bins, 1)
+cs = [Chromagram.from_spectrum(ss, 44100 / 4, 12 * bins, (50, 500)) for ss in sf[3]]
+tuner = Tuner(bins, 1)
 ts = tuner.tune(cs)
-#for i in range(0, len(ts), 16):
-#    util.plot_chromas(ts[i:(i + 16)])
-#    break
+for i in range(0, len(ts), 16):
+    Chromagram.plot_chromas(ts[i:(i + 16)])
+    break
 
 # this isn't very good:
 # (think this proves that the traditional template-based approach

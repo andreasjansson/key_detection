@@ -1,4 +1,7 @@
 import math
+from copy import copy
+
+from util import *
 
 class Nklang(object):
 
@@ -20,10 +23,32 @@ class Nullklang(Nklang):
         return -1
 
     def transpose(self, _):
-        return Nullklang();
+        return Nullklang()
 
     def __repr__(self):
         return '<Nullklang>'
+
+class Anyklang(object):
+
+    def __init__(self, notes, n):
+        self.original_notes = copy(notes)
+        self.notes = notes
+        if len(notes) < n:
+            self.notes += self.notes[-1] * (n - len(notes))
+
+    def get_name(self):
+        return ', '.join(map(lambda n: note_names[n], self.original_notes))
+
+    def get_number(self):
+        return np.dot(np.array(self.notes), (12 ** np.arange(len(self.notes))))
+
+    def transpose(self, delta):
+        transposed_notes = map(lambda n: (n + delta) % 12, self.original_notes)
+        return Anyklang(transposed_notes, len(self.notes))
+
+    def __repr__(self):
+        return '<%d-klang: %s>' % (len(self.original_notes), self.get_name())
+
 
 class Einklang(Nklang):
 

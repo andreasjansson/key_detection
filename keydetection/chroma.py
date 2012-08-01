@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from copy import copy
 
 from nklang import *
 from util import *
@@ -62,29 +63,49 @@ class Chromagram(object):
     def plot(self):
         plot_chroma(self.values, self.chroma_bins)
 
-    def get_nklang(self, threshold = .1, silent = 100):
+    def get_nklang(self, threshold = .1, silent = 100, n = 2):
         # first, determine if it's a nullklang, einklang or zweiklang
         sorted_values = np.sort(self.values)[::-1]
 
-        if sorted_values[0] < silent:
+        amps = []
+        i = 0
+        while sorted_values[i] > silent and i < n:
+            amps.append(sorted_values[i])
+            i += 1
+
+        if len(amps) == 0:
             return Nullklang()
 
-        if sorted_values[1] < silent:
-            return Einklang(np.where(self.values == sorted_values[0])[0][0])
+        # copy values so that we can zero out values when we use them
+        # if we don't do this, two equal values will return the same index
+        # in both where calls
+        values = copy(self.values)
+        notes = []
+        for amp in amps:
+            note = np.where(values == amp)[0][0]
+            notes.append(note)
+            values[note] = 0
+
+        return Anyklang(notes, n)
+
+        # old:
+
+        # if sorted_values[1] < silent:
+        #     return Einklang(np.where(self.values == sorted_values[0])[0][0])
         
-        # zweiklang
-        if sorted_values[0] == sorted_values[1]:
-            first = np.where(self.values == sorted_values[0])[0][0]
-            second = np.where(self.values == sorted_values[0])[0][1]
-        else:
-            first = np.where(self.values == sorted_values[0])[0][0]
-            second = np.where(self.values == sorted_values[1])[0][0]
+        # # zweiklang
+        # if sorted_values[0] == sorted_values[1]:
+        #     first = np.where(self.values == sorted_values[0])[0][0]
+        #     second = np.where(self.values == sorted_values[0])[0][1]
+        # else:
+        #     first = np.where(self.values == sorted_values[0])[0][0]
+        #     second = np.where(self.values == sorted_values[1])[0][0]
 
-        # likely to be noise if adjacent
-        if abs(second - first) == 1 or abs(second - first) == 11:
-            return Einklang(first)
+        # # likely to be noise if adjacent
+        # if abs(second - first) == 1 or abs(second - first) == 11:
+        #     return Einklang(first)
 
-        return Zweiklang(first, second)
+        # return Zweiklang(first, second)
 
     def plot(self, show = True, yticks = True):
         ind = np.arange(len(self.values))

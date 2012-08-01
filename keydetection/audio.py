@@ -153,6 +153,7 @@ def normalise_spectra(spectra):
     return spectra
 
 def downsample(sig, factor):
+    # first filter, then downsample
     fir = signal.firwin(61, 1.0 / factor)
     sig2 = np.convolve(sig, fir, mode="valid")
     sig2 = np.array([int(x) for i, x in enumerate(sig2) if i % factor == 0], dtype = sig.dtype)

@@ -48,7 +48,9 @@ class Mp3Reader(AudioReader):
         of the original signal.
         """
 
-        wav_filename = tempfile.NamedTemporaryFile(suffix = '.wav', delete = False).name
+        wav_file = tempfile.NamedTemporaryFile(suffix = '.wav', delete = False)
+        wav_filename = wav_file.name
+        wav_file.close()
         self._mp3_to_wav(mp3_filename, wav_filename)
         samp_rate, stereo = wavfile_read_silent(wav_filename)
         os.unlink(wav_filename)

@@ -30,7 +30,7 @@ class Nullklang(Nklang):
 
 class Anyklang(object):
 
-    def __init__(self, notes, n):
+    def __init__(self, notes, n, filter_adjacent = True):
         self.original_notes = copy(notes)
         self.notes = notes
         if len(notes) < n:

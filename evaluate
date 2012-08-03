@@ -2,15 +2,17 @@
 
 # TODO: cache matrices
 
-import util
 import argparse
 import pickle
 import random
 import math
+import pickle
+
+from keydetection import *
 
 def evaluate(mp3dir, labdir, train_percent = 50, limit = None, overlap = False):
     train_percent = min(max(train_percent, 0), 100)
-    filenames = [(mp3, lab) for mp3, lab in util.filenames_from_twin_directories(mp3dir, labdir, limit)]
+    filenames = [(mp3, lab) for mp3, lab in filenames_from_twin_directories(mp3dir, labdir)]
     random.shuffle(filenames)
     if limit:
         filenames = filenames[:limit]
@@ -23,10 +25,14 @@ def evaluate(mp3dir, labdir, train_percent = 50, limit = None, overlap = False):
         training = filenames[:split]
         testing = filenames[split:]
 
-    model = util.get_aggregate_markov_matrices(training)
-    scoreboard = util.Scoreboard()
+    model = get_aggregate_markov_matrices(training)
+
+    with open('evaluate_model.pkl', 'wb') as outfile:
+        pickle.dump(model, outfile)
+
+    scoreboard = Scoreboard()
     for mp3_file, lab_file in testing:
-        lab = util.KeyLab(lab_file)
+        lab = KeyLab(lab_file)
 
         # songs with multiple keys is very hard. too hard for
         # this challenge.
@@ -40,11 +46,14 @@ def evaluate(mp3dir, labdir, train_percent = 50, limit = None, overlap = False):
             continue
 
         print '\nTesting ' + mp3_file
-        test_matrix = util.get_test_matrix(mp3_file)
-        key = util.get_key(model, test_matrix)
-        diff = actual_key.compare(key)
-        print 'Predicted: %s; Actual: %s; Diff: %s' % (key, actual_key, diff.name())
-        scoreboard.add(diff)
+        try:
+            test_matrix = get_test_matrix(mp3_file)
+            key = get_key(model, test_matrix)
+            diff = actual_key.compare(key)
+            print 'Predicted: %s; Actual: %s; Diff: %s' % (key, actual_key, diff.name())
+            scoreboard.add(diff)
+        except Exception:
+            print 'Failed to test %s' % mp3_file
 
     scoreboard.print_scores()
 

@@ -68,9 +68,9 @@ class Mp3Reader(AudioReader):
 
 class SpectrumQuantileFilter(object):
 
-    def __init__(self, quantile = 97, window_width = 200):
+    def __init__(self, quantile = 99, window_width = 200):
         self.quantile = quantile
-        self.window_width = 200
+        self.window_width = window_width
 
     def filter(self, spectrum):
         filtered = []
@@ -84,30 +84,45 @@ class SpectrumQuantileFilter(object):
             filtered += subspec
         return filtered
 
-class SpectrumPeakFilter(object):
+class SpectrumGrainFilter(object):
 
-    def __init__(self, audio, window_size = 8192,
-                 samp_rate = 11025, max_peaks = 20):
-        self.audio = audio
-        self.window_size = window_size
-        self.samp_rate = samp_rate
-        self.max_peaks = max_peaks
+    def filter(self, spectrum):
+        moving_grains = range(len(spectrum))
+        stable_grains = []
 
-    def filter(self, spectrum, frame):
-        import simpl
-        spectrum = [0] * len(spectrum)
-        audio = self.audio[(self.window_size * frame):
-                               (self.window_size * (frame + 1))]
-        pd = simpl.SndObjPeakDetection()
-        pd.set_sampling_rate(self.samp_rate)
-        pd.max_peaks = self.max_peaks
-        frames = pd.find_peaks(audio)
-        for frame in frames:
-            for peak in frame.peaks:
-                freq = peak.frequency / 4
-                bin = int(freq * self.window_size / self.samp_rate)
-                spectrum[bin] += peak.amplitude * 32768.0
-            return spectrum
+        while len(moving_grains) > 0:
+            for (i, x) in reversed(list(enumerate(moving_grains))):
+
+                def stable():
+                    stable_grains.append(x)
+                    del moving_grains[i]
+
+                if x > 0 and x < len(spectrum) - 1:
+                    if spectrum[x] >= spectrum[x - 1] and spectrum[x] >= spectrum[x + 1]:
+                        stable()
+                    elif spectrum[x] < spectrum[x - 1]:
+                        moving_grains[i] -= 1
+                    else:
+                        moving_grains[i] += 1
+
+                elif x == 0:
+                    if spectrum[x] >= spectrum[x + 1]:
+                        stable()
+                    else:
+                        moving_grains[i] += 1
+
+                else:
+                    if spectrum[x] >= spectrum[x - 1]:
+                        stable()
+                    else:
+                        moving_grains[i] -= 1
+
+        filtspec = [0] * len(spectrum)
+        for x in stable_grains:
+            filtspec[x] = spectrum[x]
+
+        return filtspec
+
 
 def get_klangs(mp3 = None, audio = None):
     fs = 11025
@@ -121,8 +136,11 @@ def get_klangs(mp3 = None, audio = None):
     filt = SpectrumQuantileFilter(99)
     sf = map(filt.filter, s)
 
+    filt = SpectrumGrainFilter()
+    sf = map(filt.filter, s)
+
     bins = 3
-    cs = [Chromagram.from_spectrum(ss, fs / 4, 12 * bins, (50, 500)) for ss in sf]
+    cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, 500)) for ss in sf]
 
     tuner = Tuner(bins, 1)
     ts = tuner.tune(cs)

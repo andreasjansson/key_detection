@@ -2,7 +2,7 @@ import hashlib
 import pickle
 import tempfile
 
-CACHING = False
+CACHING = True
 
 class Cache(object):
 

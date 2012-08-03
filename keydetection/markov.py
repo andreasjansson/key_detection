@@ -93,8 +93,12 @@ def get_aggregate_markov_matrices(filenames):
     n = 1
     matrices_list = []
     for mp3, keylab_file in filenames:
-        matrices = get_training_matrices(mp3, keylab_file)
-        matrices_list.append(matrices)
+        print 'Analysing %s' % mp3
+        try:
+            matrices = get_training_matrices(mp3, keylab_file)
+            matrices_list.append(matrices)
+        except Exception:
+            print 'Failed to analyse %s' % mp3
 
     aggregates = aggregate_matrices(matrices_list)
 

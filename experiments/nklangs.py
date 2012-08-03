@@ -36,9 +36,11 @@ for i, (chroma95, chroma99) in enumerate(zip(ts95, ts99)):
     einklang99 = chroma99.get_nklang(n = 1)
     zweiklang99 = chroma99.get_nklang(n = 2)
     dreiklang99 = chroma99.get_nklang(n = 3)
-    f.write('%d & %s & %s & %s & %s & %s & %s \\\\\n' % (
-            i * 8192, einklang95.get_name(), zweiklang95.get_name(), dreiklang95.get_name(),
-            einklang99.get_name(), zweiklang99.get_name(), dreiklang99.get_name()))
+#    f.write('%d & %s & %s & %s & %s & %s & %s \\\\\n' % (
+#            i * 8192, einklang95.get_name(), zweiklang95.get_name(), dreiklang95.get_name(),
+#            einklang99.get_name(), zweiklang99.get_name(), dreiklang99.get_name()))
+
+    print(zweiklang99.get_name())
 
 f.close()
 

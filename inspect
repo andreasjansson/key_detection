@@ -17,6 +17,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     with open(args.model, 'rb') as f:
-        model = cPickle.loads(f.readline().decode('string_escape'))
+        #model = cPickle.loads(f.readline().decode('string_escape'))
 
     summarise(model, args.limit)

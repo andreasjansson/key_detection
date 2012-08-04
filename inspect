@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
-import util
 import cPickle
 import argparse
+
+from keydetection import *
 
 def summarise(model, limit = None):
     print 'C major matrix:'
@@ -16,7 +17,12 @@ if __name__ == '__main__':
     parser.add_argument('--limit', default = 20, type = int)
     args = parser.parse_args()
 
-    with open(args.model, 'rb') as f:
+    #with open(args.model, 'rb') as f:
         #model = cPickle.loads(f.readline().decode('string_escape'))
 
+    if args.model == '__pitch_classes__':
+        model = get_pitch_class_model()
+    else:
+        import pickle
+        model = pickle.load(open(args.model))
     summarise(model, args.limit)

@@ -1,12 +1,15 @@
 #!/usr/bin/python
 
-import util
 import pickle
 import argparse
 
+from keydetection import *
+
+Cache.set_caching_enabled(False)
+
 def test(model, mp3):
-    test_matrix = util.get_test_matrix(mp3)
-    key = util.get_key(model, test_matrix)
+    test_matrix = get_test_matrix(mp3)
+    key = get_key(model, test_matrix)
     print key
     return key
 

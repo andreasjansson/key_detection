@@ -2,6 +2,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from copy import copy
+import operator
 
 from nklang import *
 from util import *
@@ -63,13 +64,13 @@ class Chromagram(object):
     def plot(self):
         plot_chroma(self.values, self.chroma_bins)
 
-    def get_nklang(self, threshold = .1, silent = 100, n = 2):
+    def get_nklang(self, threshold = .1, silent = 100, nklang_n = 2, filter_adjacent = True):
         # first, determine if it's a nullklang, einklang or zweiklang
         sorted_values = np.sort(self.values)[::-1]
 
         amps = []
         i = 0
-        while sorted_values[i] > silent and i < n:
+        while sorted_values[i] > silent and i < nklang_n:
             amps.append(sorted_values[i])
             i += 1
 
@@ -80,32 +81,28 @@ class Chromagram(object):
         # if we don't do this, two equal values will return the same index
         # in both where calls
         values = copy(self.values)
-        notes = []
+        note_amps = []
         for amp in amps:
             note = np.where(values == amp)[0][0]
-            notes.append(note)
+            note_amps.append((note, amp))
             values[note] = 0
 
-        return Anyklang(notes, n)
+        if filter_adjacent:
 
-        # old:
+            note_amps.sort(key = operator.itemgetter(1))
+            all_amps = [0] * 12
+            for n, a in note_amps:
+                all_amps[n] = a
 
-        # if sorted_values[1] < silent:
-        #     return Einklang(np.where(self.values == sorted_values[0])[0][0])
-        
-        # # zweiklang
-        # if sorted_values[0] == sorted_values[1]:
-        #     first = np.where(self.values == sorted_values[0])[0][0]
-        #     second = np.where(self.values == sorted_values[0])[0][1]
-        # else:
-        #     first = np.where(self.values == sorted_values[0])[0][0]
-        #     second = np.where(self.values == sorted_values[1])[0][0]
+            notes = []
+            for n, a in note_amps:
+                if all_amps[(n - 1) % 12] < a and all_amps[(n + 1) % 12] < a:
+                    notes.append(n)
 
-        # # likely to be noise if adjacent
-        # if abs(second - first) == 1 or abs(second - first) == 11:
-        #     return Einklang(first)
+        else:
+            notes = map(operator.itemgetter(0), note_amps)
 
-        # return Zweiklang(first, second)
+        return Anyklang(notes, nklang_n)
 
     def plot(self, show = True, yticks = True):
         ind = np.arange(len(self.values))
@@ -132,24 +129,32 @@ class Chromagram(object):
 
 class Tuner(object):
 
-    def __init__(self, bins_per_pitch, bands, pitches = 12):
+    def __init__(self, bins_per_pitch, bands = 1, pitches = 12, global_tuning = False):
         self.bins_per_pitch = bins_per_pitch
         self.bands = bands
         self.pitches = pitches
+        self.global_tuning = global_tuning
 
     def tune(self, chromas):
         """
         Tune multiple bands of chromagrams.
         """
         tuned_chromas = []
-        max_bins = [0] * self.bins_per_pitch
+
+        if self.global_tuning:
+            max_bins = [0] * self.bins_per_pitch
+            for chroma in chromas:
+                max_bins[self.get_max_bin(chroma)] += 1
+            max_bin = max_bins.index(max(max_bins))
+
         for chroma in chromas:
-            max_bins[self.get_max_bin(chroma)] += 1
-        # TODO: proper argmax
-        max_bin = max_bins.index(max(max_bins))
-        for chroma in chromas:
+
+            if not self.global_tuning:
+                max_bin = self.get_max_bin(chroma)
+
             tuned_chroma = self.tune_chroma(chroma, max_bin)
             tuned_chromas.append(tuned_chroma)
+
         return tuned_chromas
 
     def get_max_bin(self, chroma):

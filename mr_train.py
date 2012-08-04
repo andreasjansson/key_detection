@@ -9,9 +9,6 @@ import cPickle
 
 sys.path.append(os.path.dirname(__file__))
 
-#mrjob.util.log_to_stream(name='mrjob', debug = True)
-#logger = logging.getLogger('mrjob')
-
 def mapper(local_dir = None):
 
     if local_dir is None:

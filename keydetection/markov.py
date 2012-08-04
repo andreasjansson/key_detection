@@ -4,6 +4,7 @@ from cache import *
 from keylab import *
 from nklang import *
 from audio import *
+import logging
 
 class MarkovMatrix:
 
@@ -20,6 +21,7 @@ class MarkovMatrix:
     def increment(self, klang1, klang2):
         x = klang1.get_number()
         y = klang2.get_number()
+
         self.m[x][y] += 1
 
     # "transpose" in the musical sense, not matrix transposition
@@ -44,9 +46,9 @@ class MarkovMatrix:
         return np.dot(self.m.ravel(), other.m.ravel())
 
     def normalise(self):
-        max = np.max(self.m)
+        sum = np.sum(self.m)
         if max > 0:
-            self.m /= max
+            self.m /= sum
 
     # add up all columns to get the relative frequencies of the "to"
     # values in the klang analysis. known bug: first klang is discarded.
@@ -83,8 +85,8 @@ def aggregate_matrices(matrices_list):
             for i in range(24):
                 aggregate_matrices[i].add(matrices[i])
 
-#    for matrix in aggregate_matrices:
-#        matrix.normalise()
+    for matrix in aggregate_matrices:
+        matrix.normalise()
 
     return aggregate_matrices
 
@@ -93,13 +95,15 @@ def get_aggregate_markov_matrices(filenames):
     n = 1
     matrices_list = []
     for mp3, keylab_file in filenames:
-        print 'Analysing %s' % mp3
-        try:
-            matrices = get_training_matrices(mp3, keylab_file)
+        logging.info('Analysing %s' % mp3)
+        matrices = get_training_matrices(mp3, keylab_file)
+        if matrices:
+            logging.debug('Appending matrices')
             matrices_list.append(matrices)
-        except Exception:
-            print 'Failed to analyse %s' % mp3
+        else:
+            logging.debug('No matrices to append')
 
+    logging.debug('Aggregating matrices')
     aggregates = aggregate_matrices(matrices_list)
 
     return aggregates
@@ -118,7 +122,6 @@ def get_markov_matrices(keylab, klangs):
     for t, klang in klangs:
         key = keylab.key_at(t)
 
-        #print key, klang # do this if verbose
         if key is not None and \
                 prev_klang is not None and \
                 prev_key == key and \
@@ -149,6 +152,7 @@ def get_training_matrices(mp3, keylab_file):
     if cache.exists():
         matrices = cache.get()
     else:
+        logging.debug('Getting key lab')
         keylab = get_key_lab(keylab_file)
 
         # no point doing lots of work if it won't
@@ -156,8 +160,16 @@ def get_training_matrices(mp3, keylab_file):
         if not keylab.is_valid():
             return None
 
-        klangs = get_klangs(mp3)
+        try:
+            logging.debug('About to get klangs')
+            klangs = get_klangs(mp3)
+        except Exception, e:
+            logging.warning('Failed to analyse %s: %s' % (mp3, e))
+            return None
+
+        logging.debug('About to get matrices')
         matrices = get_markov_matrices(keylab, klangs)
+        logging.debug('About to set cache')
         cache.set(matrices)
 
     return matrices
@@ -214,26 +226,31 @@ def get_pitch_class_model():
     major_matrix = MarkovMatrix(12 * 12)
     minor_matrix = MarkovMatrix(12 * 12)
 
-    krumscores_major = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09,
-                        2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
+    temperley_major = [0.748, 0.060, 0.488, 0.082, 0.670, 0.460,
+                       0.096, 0.715, 0.104, 0.366, 0.057, 0.400]
 
-    krumscores_minor = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53,
-                        2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
+    temperley_minor = [0.712, 0.084, 0.474, 0.618, 0.049, 0.460,
+                       0.105, 0.747, 0.404, 0.067, 0.133, 0.330]
 
     for from1 in range(12):
         for from2 in range(12):
             for to1 in range(12):
                 for to2 in range(12):
+
                     major_matrix.m[from1 * 12 + from2, to1 * 12 + to2] = \
-                        krumscores_major[from1] * krumscores_major[from2] * \
-                        krumscores_major[to1] * krumscores_major[to2]
+                        math.sqrt(temperley_major[from1] ** 2 + temperley_major[from2] ** 2) * \
+                        math.sqrt(temperley_major[to1] ** 2 + temperley_major[to2] ** 2)
                     minor_matrix.m[from1 * 12 + from2, to1 * 12 + to2] = \
-                        krumscores_minor[from1] * krumscores_minor[from2] * \
-                        krumscores_minor[to1] * krumscores_minor[to2]
+                        math.sqrt(temperley_minor[from1] ** 2 + temperley_minor[from2] ** 2) * \
+                        math.sqrt(temperley_minor[to1] ** 2 + temperley_minor[to2] ** 2)
+
 
     model = [None] * 24
     for i in range(12):
         model[i] = major_matrix.transpose_key(i)
         model[i + 12] = minor_matrix.transpose_key(i)
+
+    for m in model:
+        m.normalise()
 
     return model

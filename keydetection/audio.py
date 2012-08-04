@@ -9,12 +9,15 @@ import sys
 import os.path
 from StringIO import StringIO
 import matplotlib.pyplot as plt
+import logging
 
 from chroma import *
 
 class AudioReader(object):
 
     def _process(self, samp_rate, stereo, length, downsample_factor):
+
+        logging.debug('Making mono')
 
         if len(stereo.shape) == 2:
             mono = stereo[:,0]
@@ -24,17 +27,22 @@ class AudioReader(object):
         if length and len(mono) / samp_rate > length:
             mono = mono[0:int(length * samp_rate)]
 
+        logging.debug('Downsamping')
         # pad with zeroes before downsampling
         padding = np.array([0] * (downsample_factor - (len(mono) % downsample_factor)), dtype = mono.dtype)
         mono = np.concatenate((mono, padding))
         # downsample
         if downsample_factor > 1:
             mono = downsample(mono, downsample_factor)
+
+        logging.debug('Finished processing audio')
+
         return (samp_rate / downsample_factor, mono)
 
 class WavReader(AudioReader):
 
     def read(self, wav_filename, length = None, downsample_factor = 4):
+        logging.debug('About to read wavfile')
         samp_rate, stereo = wavfile_read_silent(wav_filename)
         return self._process(samp_rate, stereo, length, downsample_factor)
 
@@ -52,6 +60,7 @@ class Mp3Reader(AudioReader):
         wav_filename = wav_file.name
         wav_file.close()
         self._mp3_to_wav(mp3_filename, wav_filename)
+        
         samp_rate, stereo = wavfile_read_silent(wav_filename)
         os.unlink(wav_filename)
         return self._process(samp_rate, stereo, length, downsample_factor)
@@ -63,6 +72,7 @@ class Mp3Reader(AudioReader):
         if not os.path.exists(mp3_filename):
             raise IOError('File not found')
         os.system("mpg123 -w \"" + wav_filename.replace('"', '\\"') + "\" \"" + mp3_filename.replace('"', '\\"') + "\" &> /dev/null")
+        logging.debug('Finished decoding mp3')
         if not os.path.exists(wav_filename):
             raise IOError('Failed to create wav file')
 
@@ -129,23 +139,31 @@ def get_klangs(mp3 = None, audio = None):
     winlength = 8192
 
     if mp3:
+        logging.debug('Reading mp3')
         _, audio = Mp3Reader().read(mp3)
 
+    logging.debug('Generating spectrum')
     s = [spectrum for (t, spectrum) in generate_spectrogram(audio, winlength)]
+
+    logging.debug('Filtering spectrum')
 
     filt = SpectrumQuantileFilter(99)
     sf = map(filt.filter, s)
 
     filt = SpectrumGrainFilter()
-    sf = map(filt.filter, s)
+    sf = map(filt.filter, sf)
 
     bins = 3
+    logging.debug('Getting chromagram')
     cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, 500)) for ss in sf]
 
-    tuner = Tuner(bins, 1)
+    logging.debug('Tuning')
+    tuner = Tuner(bins, global_tuning = True)
     ts = tuner.tune(cs)
 
-    return [(i * winlength / fs, t.get_nklang()) for i, t in enumerate(ts)]
+    logging.debug('Returning klags')
+    klangs = [(i * winlength / fs, t.get_nklang()) for i, t in enumerate(ts)]
+    return klangs
 
 def wavfile_read_silent(wav_filename):
     old_stdout = sys.stdout
@@ -174,9 +192,14 @@ def normalise_spectra(spectra):
 
 def downsample(sig, factor):
     # first filter, then downsample
+
+    logging.debug('Creating filter')
     fir = signal.firwin(61, 1.0 / factor)
+    logging.debug('Convolving')
     sig2 = np.convolve(sig, fir, mode="valid")
+    logging.debug('Downsampling')
     sig2 = np.array([int(x) for i, x in enumerate(sig2) if i % factor == 0], dtype = sig.dtype)
+    logging.debug('Done downsampling')
     return sig2
 
 def plot_spectrum(spectrum, fs = 11025, zoom = None, clear = True,

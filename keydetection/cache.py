@@ -2,23 +2,23 @@ import hashlib
 import pickle
 import tempfile
 
-CACHING = True
-
 class Cache(object):
+
+    enabled = True
 
     def __init__(self, prefix, key):
         self.name = '%s/cache_%s_%s.pkl' % (tempfile.gettempdir(), prefix, hashlib.md5(key).hexdigest())
         self._data = None
 
     def exists(self):
-        if not CACHING:
+        if not Cache.enabled:
             False
 
         return self.get() is not None
 
     # handles broken pickle
     def get(self):
-        if not CACHING:
+        if not Cache.enabled:
             return None
 
         if self._data is not None:
@@ -31,9 +31,13 @@ class Cache(object):
             return None
 
     def set(self, data):
-        if not CACHING:
+        if not Cache.enabled:
             return
 
         with open(self.name, 'wb') as f:
             pickle.dump(data, f)
+
+    @staticmethod
+    def set_caching_enabled(enabled):
+        Cache.enabled = enabled
 

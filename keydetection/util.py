@@ -28,7 +28,7 @@ def filenames_from_file(filename):
     # TODO
     pass
 
-def filenames_from_twin_directories(mp3_root, lab_root, limit = None):
+def filenames_from_twin_directories(mp3_root, lab_root, limit = None, group_by_dir = False):
     '''
     Requires the mp3_root and lab_root to have the exact same structure, with
     identical filenames, except for the file extension
@@ -37,8 +37,16 @@ def filenames_from_twin_directories(mp3_root, lab_root, limit = None):
     lab_folders = set(os.listdir(lab_root))
     shared_folders = mp3_folders.intersection(lab_folders)
 
+    if group_by_dir:
+        filenames = {}
+    else:
+        filenames = []
+
     i = 0
     for folder in shared_folders:
+
+        if group_by_dir:
+            filenames_in_dir = []
 
         mp3_folder = mp3_root + "/" + folder
         lab_folder = lab_root + "/" + folder
@@ -52,12 +60,21 @@ def filenames_from_twin_directories(mp3_root, lab_root, limit = None):
         for f in shared_files:
 
             if limit is not None and i >= limit:
-                raise StopIteration
+                return filenames
 
             mp3_file = mp3_folder + "/" + f + ".mp3"
             lab_file = lab_folder + "/" + f + ".lab"
             i += 1
-            yield (mp3_file, lab_file)
+
+            if group_by_dir:
+                filenames_in_dir.append((mp3_file, lab_file))
+            else:
+                filenames.append((mp3_file, lab_file))
+
+        if group_by_dir:
+            filenames[folder] = filenames_in_dir
+
+    return filenames
 
 def dot_product(a, b):
     return sum(map(operator.mul, a, b))

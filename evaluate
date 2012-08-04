@@ -1,43 +1,75 @@
 #!/usr/bin/python
 
-# TODO: cache matrices
-
 import argparse
 import pickle
 import random
 import math
 import pickle
+import logging
+
+logging.basicConfig(level = logging.INFO)
 
 from keydetection import *
 
-def evaluate(mp3dir, labdir, train_percent = 50, limit = None, overlap = False):
-    train_percent = min(max(train_percent, 0), 100)
-    filenames = [(mp3, lab) for mp3, lab in filenames_from_twin_directories(mp3dir, labdir)]
-    random.shuffle(filenames)
-    if limit:
-        filenames = filenames[:limit]
+def evaluate(mp3dir, labdir, train_percent = 50, limit = None, overlap = False,
+             cross_validate = False):
 
-    if overlap:
-        training = filenames
-        testing = filenames
+    if cross_validate:
+        models = {}
+        filenames_in_folders = filenames_from_twin_directories(mp3dir, labdir, group_by_dir = True)
+        for folder, filenames in filenames_in_folders.iteritems():
+            cache = Cache('xeval', folder)
+            if cache.exists():
+                logging.info('Getting %s model from cache' % folder)
+                models[folder] = cache.get()
+            else:
+                models[folder] = get_aggregate_markov_matrices(filenames)
+                cache.set(models[folder])
+
+        for folder, filenames in filenames_in_folders.iteritems():
+            model = aggregate_matrices(
+                [matrices for fold, matrices in models.iteritems() if fold != folder])
+
+            with open('evaluate_model_%s.pkl' % filter(str.isalnum, folder), 'wb') as outfile:
+                pickle.dump(model, outfile)
+            
+            test(model, filenames)
+
     else:
-        split = int(math.ceil(len(filenames) * train_percent / 100))
-        training = filenames[:split]
-        testing = filenames[split:]
 
-    model = get_aggregate_markov_matrices(training)
+        train_percent = min(max(train_percent, 0), 100)
+        filenames = filenames_from_twin_directories(mp3dir, labdir)
+        random.seed(1)
+        random.shuffle(filenames)
+        if limit:
+            filenames = filenames[:limit]
+        
+        if overlap:
+            training = filenames
+            testing = filenames
+        else:
+            split = int(math.ceil(len(filenames) * train_percent / 100))
+            training = filenames[:split]
+            testing = filenames[split:]
 
-    with open('evaluate_model.pkl', 'wb') as outfile:
-        pickle.dump(model, outfile)
+        model = get_aggregate_markov_matrices(training)
+        #model = get_pitch_class_model()
+        #model = pickle.load(open('evaluate_model.pkl'))
+        
+        #with open('evaluate_model.pkl', 'wb') as outfile:
+        #    pickle.dump(model, outfile)
 
+        test(model, testing)
+
+def test(model, filenames):
     scoreboard = Scoreboard()
-    for mp3_file, lab_file in testing:
+    for mp3_file, lab_file in filenames:
         lab = KeyLab(lab_file)
 
         # songs with multiple keys is very hard. too hard for
         # this challenge.
         if lab.key_count() > 1:
-            print '\n%s has more than one key (%s), skipping' % (lab_file, ', '.join(map(repr, lab.real_keys())))
+            logging.warning('\n%s has more than one key (%s), skipping' % (lab_file, ', '.join(map(repr, lab.real_keys()))))
             continue
 
         actual_key = lab.majority_key()
@@ -57,12 +89,14 @@ def evaluate(mp3dir, labdir, train_percent = 50, limit = None, overlap = False):
 
     scoreboard.print_scores()
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Train key detector')
     parser.add_argument('-m', '--mp3dir', required = True)
     parser.add_argument('-l', '--labdir', required = True)
     parser.add_argument('-t', '--trainpercent', type = int, default = 50)
     parser.add_argument('-o', '--overlap', action = 'store_true')
+    parser.add_argument('-x', '--crossvalidate', action = 'store_true')
     parser.add_argument('--limit', type = int)
     args = parser.parse_args()
-    evaluate(args.mp3dir, args.labdir, args.trainpercent, args.limit, args.overlap)
+    evaluate(args.mp3dir, args.labdir, args.trainpercent, args.limit, args.overlap, args.crossvalidate)

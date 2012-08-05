@@ -86,7 +86,7 @@ def test(model, filenames):
         print '\nTesting ' + mp3_file
         try:
             test_matrix = get_test_matrix(mp3_file)
-            key = get_key(model, test_matrix)
+            key = get_key(model, test_matrix, unmarkov = True)
             diff = actual_key.compare(key)
             print 'Predicted: %s; Actual: %s; Diff: %s' % (key, actual_key, diff.name())
             scoreboard.add(diff)

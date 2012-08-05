@@ -44,9 +44,10 @@ class MarkovMatrix:
                 self.m[i][j] += other.m[i][j]
 
     def similarity(self, other):
-        # better without sqrt it appears
-        # return np.dot(np.sqrt(self.m).ravel(), np.sqrt(other.m).ravel())
         return np.dot(self.m.ravel(), other.m.ravel())
+
+    def similarity_unmarkov(self, other):
+        return np.dot(self.get_unmarkov_array(), other.get_unmarkov_array())
 
     def normalise(self):
         sum = np.sum(self.m)
@@ -203,28 +204,20 @@ def get_test_matrix(mp3):
 
     return matrix
 
-def get_key(training_matrices, test_matrix):
+def get_key(training_matrices, test_matrix, unmarkov = False):
     argmax = -1
     maxsim = 0
     for i, matrix in enumerate(training_matrices):
-        sim = matrix.similarity(test_matrix)
-        if sim > maxsim:
-            maxsim = sim
-            argmax = i
-    argmax = argmax % 24
-    if argmax < 12:
-        return MajorKey(argmax)
-    else:
-        return MinorKey(argmax - 12)
 
-def get_key_from_unmarkov_array(training_arrays, test_array):
-    argmax = -1
-    maxsim = 0
-    for i, array in enumerate(training_arrays):
-        sim = np.dot(array, test_array)
+        if unmarkov:
+            sim = matrix.similarity_unmarkov(test_matrix)
+        else:
+            sim = matrix.similarity(test_matrix)
+
         if sim > maxsim:
             maxsim = sim
             argmax = i
+
     argmax = argmax % 24
     if argmax < 12:
         return MajorKey(argmax)

@@ -32,3 +32,10 @@ class Scoreboard(object):
         for diff, count in self.diffs.iteritems():
             print '%s: %d' % (diff.name(), count)
 
+    @staticmethod
+    def aggregate(scoreboards):
+        scoreboard = Scoreboard()
+        for diff in scoreboard.diffs:
+            for s in scoreboards:
+                scoreboard.diffs[diff] += s.diffs[diff]
+        return scoreboard

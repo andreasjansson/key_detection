@@ -9,13 +9,18 @@ import logging
 class MarkovMatrix:
 
     def __init__(self, width = None):
-        if width is not None:
+        if width is None:
+            self.width = 0
+            self.m = None
+        else:
+            self.width = width
             self.m = np.zeros(shape = (width, width))
 
     @staticmethod
     def from_matrix(m):
         markov = MarkovMatrix()
         markov.m = m
+        markov.width = np.shape(m)[0]
         return markov
 
     def increment(self, klang1, klang2):
@@ -26,18 +31,16 @@ class MarkovMatrix:
 
     # "transpose" in the musical sense, not matrix transposition
     def transpose_key(self, delta):
-        width = np.shape(self.m)[0]
-        m = np.roll(self.m, delta % width, 0)
-        m = np.roll(m, delta % width, 1)
+        m = np.roll(self.m, delta % self.width, 0)
+        m = np.roll(m, delta % self.width, 1)
         return MarkovMatrix.from_matrix(m)
 
     # mutable for performance
     def add(self, other):
         if np.shape(self.m) != np.shape(other.m):
             raise Error('Cannot add markov matrices of different shapes')
-        width = np.shape(self.m)[0]
-        for i in range(width):
-            for j in range(width):
+        for i in range(self.width):
+            for j in range(self.width):
                 self.m[i][j] += other.m[i][j]
 
     def similarity(self, other):
@@ -47,7 +50,7 @@ class MarkovMatrix:
 
     def normalise(self):
         sum = np.sum(self.m)
-        if max > 0:
+        if sum > 0:
             self.m /= sum
 
     # add up all columns to get the relative frequencies of the "to"
@@ -57,7 +60,7 @@ class MarkovMatrix:
 
     def __repr__(self):
         s = np.shape(self.m)
-        return '<Matrix %dx%d sum %d>' % (s[0], s[1], np.sum(self.m))
+        return '<Matrix %dx%d sum %f>' % (s[0], s[1], np.sum(self.m))
 
     def print_summary(self, max_lines = 20):
         # in numpy most things are mutable. side effects everywhere,
@@ -77,6 +80,10 @@ class MarkovMatrix:
                     return
             i += 1
 
+    def multiply(self, factor):
+        for i in range(self.width):
+            for j in range(self.width):
+                self.m[i][j] *= factor
 
 def aggregate_matrices(matrices_list):
     aggregate_matrices = [MarkovMatrix(12 * 12) for i in range(12 * 2)]
@@ -84,9 +91,13 @@ def aggregate_matrices(matrices_list):
         if matrices is not None:
             for i in range(24):
                 aggregate_matrices[i].add(matrices[i])
+                
 
-    for matrix in aggregate_matrices:
+    for i, matrix in enumerate(aggregate_matrices):
         matrix.normalise()
+
+        if i >= 12:
+            matrix.multiply(.5)
 
     return aggregate_matrices
 
@@ -132,8 +143,6 @@ def get_markov_matrices(keylab, klangs):
 
                 def t(klang):
                     root = key.root
-                    if isinstance(key, MinorKey):
-                        root = (root - 3) % 12
                     return klang.transpose(-root + i)
 
                 if isinstance(key, MajorKey):

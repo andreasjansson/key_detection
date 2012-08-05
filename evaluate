@@ -26,6 +26,8 @@ def evaluate(mp3dir, labdir, train_percent = 50, limit = None, overlap = False,
                 models[folder] = get_aggregate_markov_matrices(filenames)
                 cache.set(models[folder])
 
+        scoreboards = []
+
         for folder, filenames in filenames_in_folders.iteritems():
             model = aggregate_matrices(
                 [matrices for fold, matrices in models.iteritems() if fold != folder])
@@ -33,7 +35,11 @@ def evaluate(mp3dir, labdir, train_percent = 50, limit = None, overlap = False,
             with open('evaluate_model_%s.pkl' % filter(str.isalnum, folder), 'wb') as outfile:
                 pickle.dump(model, outfile)
             
-            test(model, filenames)
+            scoreboards.append(test(model, filenames))
+
+        final_scoreboard = Scoreboard.aggregate(scoreboards)
+        print '\n**** TOTAL SCORES ****'
+        final_scoreboard.print_scores()
 
     else:
 
@@ -88,6 +94,8 @@ def test(model, filenames):
             print 'Failed to test %s' % mp3_file
 
     scoreboard.print_scores()
+
+    return scoreboard
 
 
 if __name__ == '__main__':

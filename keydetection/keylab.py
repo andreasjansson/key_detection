@@ -9,12 +9,13 @@ simple_keymap = {'C': MajorKey(0), 'C#': MajorKey(1), 'Db': MajorKey(1),
                  'Gb': MajorKey(6), 'G': MajorKey(7), 'G#': MajorKey(8),
                  'Ab': MajorKey(8), 'A': MajorKey(9), 'A#': MajorKey(10),
                  'Bb': MajorKey(10), 'B': MajorKey(11),
-                 'C:minor': MinorKey(3), 'C#:minor': MinorKey(4), 'Db:minor': MinorKey(4),
-                 'D:minor': MinorKey(5), 'D#:minor': MinorKey(6), 'Eb:minor': MinorKey(6),
-                 'E:minor': MinorKey(7), 'F:minor': MinorKey(8), 'F#:minor': MinorKey(9),
-                 'Gb:minor': MinorKey(9), 'G:minor': MinorKey(10), 'G#:minor': MinorKey(11),
-                 'Ab:minor': MinorKey(11), 'A:minor': MinorKey(0), 'A#:minor': MinorKey(1),
-                 'Bb:minor': MinorKey(1), 'B:minor': MinorKey(2), 'Silence': None}
+                 'C:minor': MinorKey(0), 'C#:minor': MinorKey(1), 'Db:minor': MinorKey(1),
+                 'D:minor': MinorKey(2), 'D#:minor': MinorKey(3), 'Eb:minor': MinorKey(3),
+                 'E:minor': MinorKey(4), 'F:minor': MinorKey(5), 'F#:minor': MinorKey(6),
+                 'Gb:minor': MinorKey(6), 'G:minor': MinorKey(7), 'G#:minor': MinorKey(8),
+                 'Ab:minor': MinorKey(8), 'A:minor': MinorKey(9), 'A#:minor': MinorKey(10),
+                 'Bb:minor': MinorKey(10), 'B:minor': MinorKey(11),
+                 'Silence': None}
 
 class LabParser(object):
 

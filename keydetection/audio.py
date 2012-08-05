@@ -153,7 +153,7 @@ def get_klangs(mp3 = None, audio = None):
     filt = SpectrumGrainFilter()
     sf = map(filt.filter, sf)
 
-    bins = 3
+    bins = 5
     logging.debug('Getting chromagram')
     cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, 500)) for ss in sf]
 

@@ -100,3 +100,11 @@ Using the provided model
 ------------------------
 
 This package comes with a model that has already been trained with 151 Beatles songs, to an accuracy of 75% (cross-validated on the same Beatles tracks). To use this model instead of having to train your own model, invoke `train` and `inspect` without the `-m` flag. (The default value for `-m` is `model.pkl`, which is the name of the pre-trained model.)
+
+
+Installation
+------------
+
+This package is written in Python, and thus requires the user to have Python (version 2.6 or 2.7) installed. Additional dependencies are the numpy, scipy and argparse Python packages. Instructions on installing numpy and scipy can be found [here](http://www.scipy.org/Installing_SciPy/Linux). Argparse can be installed by running `easy_install argparse` from the command line.
+
+The audio module uses _mpg123_ to convert mp3 files to wav. If this program is not available for your platform, the code that uses it can be easily modified to use other software. It's in the `Mp3Reader.\_mp3\_to\_wav` function, in audio.py.

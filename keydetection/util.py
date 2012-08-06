@@ -1,24 +1,11 @@
-# TODO: test with different training sets;
-#       test with "handcoded" model
-#       why is yellow submarine tested as C# major!!!?
-#       normalise matrices to 1, otherwise we'll never match minor keys
-#       find collection of annotated classical music (where the
-#         annotation format supports key, e.g. abc), synthesise with
-#         timidity and use these as training data. compare to
-#         beatles data.
-
 import operator
 import math
 import os.path
-#import matplotlib.pyplot as plt
 from glob import glob
 import urllib
-import boto.s3.key
-#import pdb
 import random
 
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
-
 
 def filenames_from_file(filename):
     '''
@@ -85,6 +72,7 @@ def download(filename, suffix = ''):
     return tmp
 
 def s3_download(bucket, s3_filename):
+    import boto.s3.key
     local_file = tempfile.NamedTemporaryFile(suffix = os.path.splitext(s3_filename)[1], delete = False)
     k = boto.s3.key.Key(bucket)
     k.key = s3_filename

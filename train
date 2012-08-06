@@ -1,14 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-# TODO: multitread
-
-import util
 import argparse
 import pickle
 
+from keydetection import *
+
 def train(mp3dir, labdir, limit = None):
-    training_filenames = util.filenames_from_twin_directories(mp3dir, labdir, limit)
-    training_matrices = util.get_aggregate_markov_matrices(training_filenames)
+    training_filenames = filenames_from_twin_directories(mp3dir, labdir, limit)
+    training_matrices = get_aggregate_markov_matrices(training_filenames)
     return training_matrices
 
 if __name__ == '__main__':

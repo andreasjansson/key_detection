@@ -71,7 +71,7 @@ class Mp3Reader(AudioReader):
 
         if not os.path.exists(mp3_filename):
             raise IOError('File not found')
-        os.system("mpg123 -w \"" + wav_filename.replace('"', '\\"') + "\" \"" + mp3_filename.replace('"', '\\"') + "\" &> /dev/null")
+        os.system("mpg123 -q -w \"" + wav_filename.replace('"', '\\"') + "\" \"" + mp3_filename.replace('"', '\\"') + "\"")
         logging.debug('Finished decoding mp3')
         if not os.path.exists(wav_filename):
             raise IOError('Failed to create wav file')

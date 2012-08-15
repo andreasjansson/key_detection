@@ -1,0 +1,49 @@
+from music21 import corpus
+from music21.stream import Opus
+from keydetection import *
+import sys
+import random
+
+def print_keys():
+
+    paths = corpus.getCorePaths()
+    random.shuffle(paths)
+
+    for path in corpus.getCorePaths():
+        piece = corpus.parse(path)
+        if isinstance(piece, Opus):
+            for score in piece.scores:
+                print_keys_for_score(score, path)
+        else:
+            print_keys_for_score(piece, path)
+
+
+def print_keys_for_score(score, path):
+
+    keys = score.parts[0].getKeySignatures()
+    if len(keys) == 0:
+        sys.stderr.write('No keys for %s\n' % path)
+    if len(keys) > 1:
+        sys.stderr.write('Too many keys for %s: %d\n' % (path, len(keys)))
+        return
+
+    key = keys[0]
+    if not key.mode:
+        sys.stderr.write('No mode for %s\n' % path)
+        return
+
+    root_pitch, mode = key.pitchAndMode
+    root = root_pitch.pitchClass
+    if mode == 'major':
+        key = MajorKey(root)
+    elif mode == 'minor':
+        key = MinorKey(root)
+    else:
+        sys.stderr.write('Unknown mode for %s: %s\n' % (path, mode))
+        return
+
+    print '%s: %s' % (path, key)
+
+    
+
+print_keys()

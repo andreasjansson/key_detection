@@ -76,10 +76,10 @@ def s3_upload(bucket_name, local_filename, s3_filename):
     import boto.s3.bucket
 
     conn = boto.connect_s3()
-    bucket = boto.s3.bucket.Bucket(bucket_name)
+    bucket = boto.s3.bucket.Bucket(conn, bucket_name)
     key = boto.s3.key.Key(bucket)
     key.key = s3_filename
-    key.set_contents_from_file(local_filename)
+    key.set_contents_from_filename(local_filename)
     key.make_public()
     
 

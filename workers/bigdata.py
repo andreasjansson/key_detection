@@ -68,7 +68,8 @@ def print_keys_for_score(score, path):
     midi_file.close()
     os.system('timidity -Ow -o %s %s' % (wav_filename, midi_filename))
     os.system('lame %s %s' % (wav_filename, mp3_filename))
-    s3_upload('andreasjansson', local_filename, s3_filename)
+    s3_upload('andreasjansson', mp3_filename, s3_filename)
+    print 'Uploaded to ' + s3_filename
 
 
 def partition(array, n, t):

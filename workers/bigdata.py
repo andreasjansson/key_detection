@@ -31,13 +31,15 @@ def print_keys(n, t):
 def print_keys_for_score(score, path):
 
     keys = score.parts[0].getKeySignatures()
-    if len(keys) == 0:
-        sys.stderr.write('No keys for %s\n' % path)
     if len(keys) > 1:
         sys.stderr.write('Too many keys for %s: %d\n' % (path, len(keys)))
         return
 
-    key = keys[0]
+    try:
+        key = keys[0]
+    except Exception:
+        sys.stderr.write('No keys for %s\n' % path)
+
     if not key.mode:
         sys.stderr.write('No mode for %s\n' % path)
         return

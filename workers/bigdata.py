@@ -1,13 +1,18 @@
 from music21 import corpus
 from music21.stream import Opus
-from keydetection import *
 import sys
+import os
 import random
+import argparse
+import math
 
-def print_keys():
+sys.path.insert(0, os.path.abspath('..'))
+from keydetection import *
 
-    paths = corpus.getCorePaths()
-    random.shuffle(paths)
+def print_keys(n, t):
+
+    paths = sorted(corpus.getCorePaths())
+    paths = partition(paths, n, t)
 
     for path in corpus.getCorePaths():
         piece = corpus.parse(path)
@@ -44,6 +49,19 @@ def print_keys_for_score(score, path):
 
     print '%s: %s' % (path, key)
 
-    
 
-print_keys()
+def partition(array, n, t):
+    part = len(array) / float(t)
+    start = int(math.floor(part * n))
+    end = int(math.floor(part * (n + 1)))
+    return array[start:end]
+    
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description = 'bigdata')
+    parser.add_argument('-n', '--nth-worker', type = int)
+    parser.add_argument('-t', '--total-workers', type = int)
+    parser.add_argument('command', choices = ['printkeys'])
+    args = parser.parse_args()
+
+    if args.command == 'printkeys':
+        print_keys(args.nth_worker - 1, args.total_workers)

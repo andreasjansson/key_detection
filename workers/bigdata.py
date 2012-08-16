@@ -39,6 +39,7 @@ def print_keys_for_score(score, path):
         key = keys[0]
     except Exception:
         sys.stderr.write('No keys for %s\n' % path)
+        return
 
     if not key.mode:
         sys.stderr.write('No mode for %s\n' % path)

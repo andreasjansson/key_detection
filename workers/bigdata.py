@@ -13,9 +13,14 @@ def print_keys(n, t):
 
     paths = sorted(corpus.getCorePaths())
     paths = partition(paths, n, t)
+    print paths[0]
 
-    for path in corpus.getCorePaths():
-        piece = corpus.parse(path)
+    for path in paths:
+        try:
+            piece = corpus.parse(path)
+        except Exception:
+            sys.stderr.write('Failed to parse %s\n' % path)
+            continue
         if isinstance(piece, Opus):
             for score in piece.scores:
                 print_keys_for_score(score, path)

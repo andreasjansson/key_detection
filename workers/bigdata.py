@@ -13,7 +13,6 @@ def print_keys(n, t):
 
     paths = sorted(corpus.getCorePaths())
     paths = partition(paths, n, t)
-    print paths[0]
 
     for path in paths:
         try:
@@ -26,7 +25,6 @@ def print_keys(n, t):
                 print_keys_for_score(score, path)
         else:
             print_keys_for_score(piece, path)
-
 
 def print_keys_for_score(score, path):
 
@@ -56,6 +54,21 @@ def print_keys_for_score(score, path):
         return
 
     print '%s: %s' % (path, key)
+
+    midi_filename = '/tmp/tmp.mid'
+    wav_filename = '/tmp/tmp.wav'
+    mp3_filename = '/tmp/mp3.mp3'
+
+    midi_file = score.midiFile
+    midi_file.open(midi_filename, 'wb')
+    short_path = re.sub('^.*/corpus/(.*)\..*$', r'\1', path).replace('/', '-')
+    s3_filename = 'keydetection/%s_%s/%s.mp3' % (note_names[root], mode, short_path)
+
+    midi_file.write()
+    midi_file.close()
+    os.system('timidity -Ow -o %s %s' % (wav_filename, midi_filename))
+    os.system('lame %s %s' % (wav_filename, mp3_filename))
+    s3_upload('andreasjansson', local_filename, s3_filename)
 
 
 def partition(array, n, t):

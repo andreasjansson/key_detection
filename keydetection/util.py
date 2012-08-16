@@ -71,6 +71,18 @@ def download(filename, suffix = ''):
     response = urllib.urlretrieve(filename, tmp)
     return tmp
 
+def s3_upload(bucket_name, local_filename, s3_filename):
+    import boto.s3.key
+    import boto.s3.bucket
+
+    conn = boto.connect_s3()
+    bucket = boto.s3.bucket.Bucket(bucket_name)
+    key = boto.s3.key.Key(bucket)
+    key.key = s3_filename
+    key.set_contents_from_file(local_filename)
+    key.make_public()
+    
+
 def s3_download(bucket, s3_filename):
     import boto.s3.key
     local_file = tempfile.NamedTemporaryFile(suffix = os.path.splitext(s3_filename)[1], delete = False)

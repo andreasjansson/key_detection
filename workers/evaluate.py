@@ -44,7 +44,8 @@ def evaluate(filenames_file, models_dir):
         print '\nTesting ' + mp3_file
         try:
             test_matrix = get_test_matrix(mp3_file)
-            key = get_key(model, test_matrix, unmarkov = True)
+            test_matrix.print_summary()
+            key = get_key(model, test_matrix, unmarkov = False)
             diff = actual_key.compare(key)
             print 'Predicted: %s; Actual: %s; Diff: %s' % (key, actual_key, diff.name())
             scoreboard.add(diff)

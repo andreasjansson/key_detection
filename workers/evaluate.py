@@ -13,12 +13,17 @@ def evaluate(filenames_file, models_dir):
         for line in f.readlines():
             filenames.append(line.split('::'))
 
-    model_files = glob(models_dir + '/*')
-    models = []
-    for model_file in model_files:
-        with open(model_file, 'r') as f:
-            models.append(pickle.load(f))
-    model = aggregate_matrices(models)
+    cache = Cache('aggmodel')
+    if cache.exists():
+        model = cache.get()
+    else:
+        model_files = glob(models_dir + '/*')
+        models = []
+        for model_file in model_files:
+            with open(model_file, 'r') as f:
+                models.append(pickle.load(f))
+        model = aggregate_matrices(models)
+        cache.set(model)
 
     scoreboard = Scoreboard()
     for mp3_file, lab_file in filenames:

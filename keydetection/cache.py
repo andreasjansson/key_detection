@@ -6,7 +6,7 @@ class Cache(object):
 
     enabled = True
 
-    def __init__(self, prefix, key):
+    def __init__(self, prefix, key = ''):
         self.name = '%s/cache_%s_%s.pkl' % (tempfile.gettempdir(), prefix, hashlib.md5(key).hexdigest())
         self._data = None
 

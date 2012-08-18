@@ -11,8 +11,10 @@ from keydetection import *
 
 def print_keys(n, t):
 
-    paths = sorted(corpus.getCorePaths())
+    paths = sorted(corpus.getCorePaths('mxl'))
     paths = partition(paths, n, t)
+
+    random.shuffle(paths)
 
     for path in paths:
         try:
@@ -55,21 +57,55 @@ def print_keys_for_score(score, path):
 
     print '%s: %s' % (path, key)
 
-    midi_filename = '/tmp/tmp.mid'
-    wav_filename = '/tmp/tmp.wav'
-    mp3_filename = '/tmp/mp3.mp3'
+    try:
+        midi_filename = '/tmp/tmp.mid'
+        wav_filename = '/tmp/tmp.wav'
+        mp3_filename = '/tmp/mp3.mp3'
 
-    midi_file = score.midiFile
-    midi_file.open(midi_filename, 'wb')
-    short_path = re.sub('^.*/corpus/(.*)\..*$', r'\1', path).replace('/', '-')
-    s3_filename = 'keydetection/%s_%s/%s.mp3' % (note_names[root], mode, short_path)
+        try:
+            os.unlink(midi_filename)
+        except Exception:
+            pass
+        try:
+            os.unlink(wav_filename)
+        except Exception:
+            pass
+        try:
+            os.unlink(mp3_filename)
+        except Exception:
+            pass
 
-    midi_file.write()
-    midi_file.close()
-    os.system('timidity -Ow -o %s %s' % (wav_filename, midi_filename))
-    os.system('lame %s %s' % (wav_filename, mp3_filename))
-    s3_upload('andreasjansson', mp3_filename, s3_filename)
-    print 'Uploaded to ' + s3_filename
+        midi_file = score.midiFile
+        midi_file.open(midi_filename, 'wb')
+        short_path = re.sub('^.*/corpus/(.*)\..*$', r'\1', path).replace('/', '-')
+        s3_filename = 'keydetection/%s_%s/%s.mp3' % (note_names[root], mode, short_path)
+        s3_midi_filename = 'keydetection/%s_%s/%s.mid' % (note_names[root], mode, short_path)
+
+        midi_file.write()
+        midi_file.close()
+
+        if not os.path.exists(midi_filename):
+            sys.stderr.write('Failed to create midi file for %s\n' % midi_filename)
+            return
+
+        os.system('timidity -Ow -o %s %s' % (wav_filename, midi_filename))
+
+        if not os.path.exists(wav_filename):
+            sys.stderr.write('Failed to create wav file for %s\n' % path)
+            return
+
+        s3_upload('andreasjansson', midi_filename, s3_midi_filename)
+        print 'Uploaded midi to https://s3.amazonaws.com/andreasjansson/keydetection/' + s3_midi_filename        
+        os.system('lame %s %s' % (wav_filename, mp3_filename))
+
+        if not os.path.exists(mp3_filename):
+            sys.stderr.write('Failed to create mp3 file for %s\n' % path)
+            return
+        
+        s3_upload('andreasjansson', mp3_filename, s3_filename)
+        print 'Uploaded to https://s3.amazonaws.com/andreasjansson/keydetection/' + s3_filename
+    except Exception:
+        sys.stderr.write('Failed to create MP3 for ' + path)
 
 
 def partition(array, n, t):

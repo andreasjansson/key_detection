@@ -56,6 +56,8 @@ class Mp3Reader(AudioReader):
         of the original signal.
         """
 
+        mp3_filename = make_local(mp3_filename, '/tmp/mp3.mp3')
+
         wav_file = tempfile.NamedTemporaryFile(suffix = '.wav', delete = False)
         wav_filename = wav_file.name
         wav_file.close()

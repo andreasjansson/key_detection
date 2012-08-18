@@ -1,4 +1,5 @@
 from util import *
+import re
 
 class Key(object):
 
@@ -29,6 +30,17 @@ class Key(object):
             return KeyParallel()
 
         return KeyOther()
+
+    @staticmethod
+    def from_repr(string):
+        match = re.search(r'<(Major|Minor)Key: ([A-G]#?)>', string)
+        if not match:
+            return None
+        root = note_names.index(match.group(2))
+        if match.group(1) == 'Major':
+            return MajorKey(root)
+        else:
+            return MinorKey(root)
 
 class MajorKey(Key):
 

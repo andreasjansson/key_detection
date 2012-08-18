@@ -50,7 +50,8 @@ class LabParser(object):
 
 class KeyLab(object):
 
-    def __init__(self, lab_file):
+    def __init__(self, lab_filename):
+        lab_filename = make_local(lab_filename, '/tmp/lab.lab')
         self.keys = LabParser().parse_keys(lab_file)
 
     def is_valid(self):
@@ -84,9 +85,9 @@ class KeyLab(object):
 
 class LilyKeyLab(KeyLab):
 
-    def __init__(self, filename):
-        with open(filename, 'r') as f:
-            self.key = self.grep_key(f.read())
+    def __init__(self, lab_filename):
+        lab_filename = make_local(lab_filename, '/tmp/ly.ly')
+        self.key = lilyparser.get_key(lab_filename)
 
     def is_valid(self):
         return self.key is not None
@@ -100,97 +101,22 @@ class LilyKeyLab(KeyLab):
     def real_keys(self):
         return [self.key]
 
-    def grep_key(self, text):
+class SingleKeyLab(KeyLab):
 
-        notemap = {
-            'cb':   11,
-            'cf':   11,
-            'ces':  11,
-            'c':    0,
-            'cis':  1,
-            'cs':   1,
-            'cd':   1,
-            'db':   1,
-            'df':   1,
-            'des':  1,
-            'd':    2,
-            'dis':  3,
-            'ds':   3,
-            'dd':   3,
-            'es':   3,
-            'eb':   3,
-            'ef':   3,
-            'ees':  3,
-            'e':    4,
-            'eis':  5,
-            'ed':   5,
-            'fb':   4,
-            'ff':   4,
-            'fes':  4,
-            'f':    5,
-            'fis':  6,
-            'fs':   6,
-            'fd':   6,
-            'gb':   6,
-            'gf':   6,
-            'ges':  6,
-            'g':    7,
-            'gis':  8,
-            'gs':   8,
-            'gd':   8,
-            'ab':   8,
-            'af':   8,
-            'aes':  8,
-            'a':    9,
-            'ais':  10,
-            'as':   10,
-            'ad':   10,
-            'bb':   10,
-            'bf':   10,
-            'bes':  10,
-            'h':    11,
-            'bis':  0,
-            'bs':   0,
-            'bd':   0,
-            'dob':  11,
-            'do':   0,
-            'dod':  1,
-            'reb':  1,
-            're':   2,
-            'red':  3,
-            'mib':  3,
-            'mi':   4,
-            'mid':  5,
-            'fab':  4,
-            'fa':   5,
-            'fad':  6,
-            'solb': 6,
-            'sol':  7,
-            'sold': 8,
-            'lab':  8,
-            'la':   9,
-            'lad':  10,
-            'sib':  10,
-            'si':   11,
-            'sid':  0,
-            }
+    def __init__(self, key_name):
+        self.key = Key.from_repr(key_name)
 
-        matches = re.finditer('\\\key +([a-z]+) *\\\(major|minor)+', text)
-        key = prev_key = None
+    def is_valid(self):
+        return self.key is not None
 
-        for match in matches:
-            keyname, mode = match.groups()
-            if not keyname in notemap:
-                return None
-            if mode == 'major':
-                key = MajorKey(notemap[keyname])
-            else:
-                key = MinorKey(notemap[keyname])
-            if prev_key is not None and key != prev_key:
-                return None
-            prev_key = key
+    def key_at(self, time):
+        return self.key
 
-        return key
+    def majority_key(self):
+        return self.key
+
+    def real_keys(self):
+        return [self.key]
 
 class Beat(object):
     def __init__(self, beat, time):
@@ -202,6 +128,10 @@ class Beat(object):
 
 
 def get_key_lab(filename):
+
+    if filename.find('key:') == 0:
+        return SingleKeyLab(filename[4:])
+
     name, extension = os.path.splitext(filename)
     if extension == '.lab':
         return KeyLab(filename)

@@ -3,7 +3,7 @@ import argparse
 sys.path.insert(0, os.path.abspath('..'))
 from keydetection import *
 
-logging.basicConfig(level = logging.DEBUG)
+logging.basicConfig(level = logging.INFO)
 
 def train(filenames_file, model_filename):
     filenames = []

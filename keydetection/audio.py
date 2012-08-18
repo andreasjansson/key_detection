@@ -149,7 +149,7 @@ def get_klangs(mp3 = None, audio = None):
 
     logging.debug('Filtering spectrum')
 
-    filt = SpectrumQuantileFilter(99)
+    filt = SpectrumQuantileFilter(98, 100)
     sf = map(filt.filter, s)
 
     filt = SpectrumGrainFilter()
@@ -157,7 +157,7 @@ def get_klangs(mp3 = None, audio = None):
 
     bins = 5
     logging.debug('Getting chromagram')
-    cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, 500)) for ss in sf]
+    cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, 1000)) for ss in sf]
 
     logging.debug('Tuning')
     tuner = Tuner(bins, global_tuning = True)

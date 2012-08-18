@@ -27,5 +27,5 @@ if __name__ == '__main__':
     parser.add_argument('model')
     args = parser.parse_args()
 
-    train(args.file, args.model)
+    evaluate(args.file, args.model)
 

@@ -56,4 +56,4 @@ if __name__ == '__main__':
     parser.add_argument('models_dir')
     args = parser.parse_args()
 
-    train(args.file, args.models_dir)
+    evaluate(args.file, args.models_dir)

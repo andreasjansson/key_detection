@@ -103,6 +103,14 @@ def s3_download(bucket_name, s3_filename):
     local_file.close()
     return local_file.name
 
+def s3_delete(bucket_name, s3_filename):
+    import boto.s3.key
+    import boto.s3.bucket
+    conn = boto.connect_s3()
+    bucket = boto.s3.bucket.Bucket(conn, bucket_name)
+    bucket.delete_key(s3_filename)
+    
+
 def split_filenames(filenames, split_percent = 50, limit = None, overlap = False,
                     shuffle = True):
 

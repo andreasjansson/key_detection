@@ -22,7 +22,7 @@ def evaluate(filenames_file, models_dir):
 
     scoreboard = Scoreboard()
     for mp3_file, lab_file in filenames:
-        lab = get_keylab(lab_file)
+        lab = get_key_lab(lab_file)
 
         # songs with multiple keys is very hard. too hard for
         # this challenge.

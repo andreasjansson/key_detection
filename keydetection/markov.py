@@ -49,6 +49,11 @@ class MarkovMatrix:
             for j in range(self.width):
                 self.m[i][j] += other.m[i][j]
 
+    def add_constant(self, k):
+        for i in range(self.width):
+            for j in range(self.width):
+                self.m[i][j] += k
+
     def similarity(self, other):
         return np.dot(self.m.ravel(), other.m.ravel())
 

@@ -138,7 +138,8 @@ class SpectrumGrainFilter(object):
 
 def get_klangs(mp3 = None, audio = None):
     fs = 11025
-    winlength = 8192
+    #winlength = 8192
+    winlength = 8192 / 2
 
     if mp3:
         logging.debug('Reading mp3')

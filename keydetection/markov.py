@@ -92,6 +92,9 @@ class MarkovMatrix:
                     return
             i += 1
 
+    def get_density(self):
+        return len(np.where(self.m == 0)[0]) / float(self.width ** 2)
+
     def multiply(self, factor):
         for i in range(self.width):
             for j in range(self.width):

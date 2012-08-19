@@ -8,22 +8,28 @@ import logging
 
 class MarkovMatrix:
 
-    def __init__(self, width = None):
+    def __init__(self, width = None, order = 1):
         if width is None:
             self.width = 0
             self.m = None
+            self.order = 0
         else:
             self.width = width
             self.m = np.zeros(shape = (width, width))
+            self.order = order
 
     @staticmethod
     def from_matrix(m):
         markov = MarkovMatrix()
         markov.m = m
         markov.width = np.shape(m)[0]
+        markov.order = markov.height / markov.width
         return markov
 
-    def increment(self, klang1, klang2):
+    def increment(self, klang1, klang2): #klangs):
+
+        
+
         x = klang1.get_number()
         y = klang2.get_number()
 
@@ -75,7 +81,7 @@ class MarkovMatrix:
         while(seq[i] > 0 and i < len(seq)):
             where = np.where(seq[i] == self.m)
             for fr0m, to in zip(where[0], where[1]):
-                print '%6s => %-6s: %.3f' % (klang_number_to_name(fr0m), klang_number_to_name(to), seq[i])
+                print '%6s => %-6s: %.3f' % (klang_number_to_name(fr0m), klang_number_to_name(to), seq[i] * 100)
                 lines += 1
                 if lines > max_lines:
                     return
@@ -98,7 +104,8 @@ def aggregate_matrices(matrices_list):
         matrix.normalise()
 
         if i >= 12:
-            matrix.multiply(.5)
+            minor_key_attenuation_factor = 1
+            matrix.multiply(minor_key_attenuation_factor)
 
     return aggregate_matrices
 

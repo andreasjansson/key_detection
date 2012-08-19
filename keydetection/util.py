@@ -108,7 +108,10 @@ def s3_delete(bucket_name, s3_filename):
     import boto.s3.bucket
     conn = boto.connect_s3()
     bucket = boto.s3.bucket.Bucket(conn, bucket_name)
-    bucket.delete_key(s3_filename)
+    try:
+        bucket.delete_key(s3_filename)
+    except Exception:
+        logging.warning('Failed to delete ' + s3_filename)
     
 
 def split_filenames(filenames, split_percent = 50, limit = None, overlap = False,

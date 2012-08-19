@@ -29,6 +29,9 @@ def evaluate(filenames_file, models_dir):
     with open('/tmp/aggregate.pkl', 'wb') as f:
         f.dump(model, f)
 
+    for matrix in model:
+        matrix.normalise()
+
     scoreboard = Scoreboard()
     for mp3_file, lab_file in filenames:
         lab = get_key_lab(lab_file)

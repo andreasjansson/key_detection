@@ -109,8 +109,6 @@ def aggregate_matrices(matrices_list):
                 
 
     for i, matrix in enumerate(aggregate_matrices):
-        matrix.normalise()
-
         if i >= 12:
             minor_key_attenuation_factor = 1
             matrix.multiply(minor_key_attenuation_factor)

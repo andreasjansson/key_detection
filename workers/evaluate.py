@@ -3,6 +3,7 @@ import argparse
 sys.path.insert(0, os.path.abspath('..'))
 from keydetection import *
 from glob import glob
+import pickle
 
 logging.basicConfig(level = logging.INFO)
 Cache.set_caching_enabled(False)
@@ -27,7 +28,7 @@ def evaluate(filenames_file, models_dir):
         cache.set(model)
 
     with open('/tmp/aggregate.pkl', 'wb') as f:
-        f.dump(model, f)
+        pickle.dump(model, f)
 
     scoreboard = Scoreboard()
     for mp3_file, lab_file in filenames:

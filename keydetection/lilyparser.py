@@ -1,6 +1,7 @@
 import re
 import sys
 from glob import glob
+import os.path
 
 import key
 
@@ -11,8 +12,6 @@ def get_language(string, default = 'english'):
     if not hasattr(get_language, 'regex'):
         get_language.regex = re.compile(r'\\include +"([a-z]+)\.ly"')
     matches = get_language.regex.finditer(string)
-    if not matches:
-        return default
     
     for match in matches:
         lang = match.group(1)
@@ -23,10 +22,8 @@ def get_language(string, default = 'english'):
 
 def get_named_key(string):
     if not hasattr(get_named_key, 'regex'):
-        get_named_key.regex = re.compile(r'\\key +([a-z])+ *\\(major|minor)')
+        get_named_key.regex = re.compile(r'\\key +([a-z]+) *\\(major|minor)')
     matches = get_named_key.regex.finditer(string)
-    if not matches:
-        return None
 
     key = None
     for match in matches:
@@ -37,6 +34,28 @@ def get_named_key(string):
         key = (name, mode)
 
     return key
+
+class AmbiguousTransposeException(Exception):
+    pass
+
+def get_transpose(string):
+    if not hasattr(get_transpose, 'regex'):
+        get_transpose.regex = re.compile(r'\\transpose +([a-z]+)\'* +([a-z]+)\'*')
+    matches = get_transpose.regex.finditer(string)
+
+    fr0m = to = prev_from = prev_to = None
+    for match in matches:
+        fr0m = match.group(1)
+        to = match.group(2)
+        if (prev_from is not None and prev_from != fr0m) \
+                or (prev_to is not None and prev_to != to):
+            raise AmbiguousTransposeException()
+        prev_from = fr0m
+        prev_to = to
+
+    if fr0m != to:
+        return (fr0m, to)
+    return None
 
 def get_key(filename):
     with open(filename) as f:
@@ -54,6 +73,20 @@ def get_key(filename):
     except Exception:
         return None
 
+    try:
+        transpose = get_transpose(string)
+    except AmbiguousTransposeException:
+        return None
+
+    if transpose is not None:
+        fr0m, to = transpose
+        try:
+            fr0m = language_notes[language][fr0m]
+            to = language_notes[language][to]
+        except Exception:
+            return None
+        root = (root + (to - fr0m)) % 12
+
     if mode == 'major':
         k = key.MajorKey(root)
     else:
@@ -62,7 +95,11 @@ def get_key(filename):
     return k
 
 if __name__ == '__main__':
-    for f in glob(sys.argv[1] + '/*.ly'):
-        k = get_key(f)
-        if k:
-            print f, k
+    if os.path.isdir(sys.argv[1]):
+        for f in glob(sys.argv[1] + '/*.ly'):
+            k = get_key(f)
+            if k:
+                print f, k
+    else:
+        k = get_key(sys.argv[1])
+        print k

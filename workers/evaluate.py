@@ -31,7 +31,10 @@ def evaluate(filenames_file, models_dir):
         pickle.dump(model, f)
 
     for matrix in model:
-        matrix.normalise()
+        msum = np.sum(matrix.m)
+        matrix.add_constant(1) # laplace smoothing
+        if msum > 0: # normalise with sum from before smoothing, so that the smoothing constant is indeed constant
+            matrix.m /= msum
 
     scoreboard = Scoreboard()
     for mp3_file, lab_file in filenames:

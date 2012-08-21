@@ -31,8 +31,8 @@ class Cache(object):
             return None
 
     def set(self, data):
-        if not Cache.enabled:
-            return
+        #if not Cache.enabled:
+        #    return
 
         with open(self.name, 'wb') as f:
             pickle.dump(data, f)

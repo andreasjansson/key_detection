@@ -165,7 +165,7 @@ def get_klangs(mp3 = None, audio = None):
     ts = tuner.tune(cs)
 
     logging.debug('Returning klags')
-    klangs = [(i * winlength / fs, t.get_nklang()) for i, t in enumerate(ts)]
+    klangs = [(i * winlength / float(fs), t.get_nklang()) for i, t in enumerate(ts)]
     return klangs
 
 def wavfile_read_silent(wav_filename):

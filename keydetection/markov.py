@@ -227,8 +227,6 @@ def get_key(training_matrices, test_matrix, unmarkov = False):
         else:
             sim = matrix.similarity(test_matrix)
 
-        print note_names[i % 12], sim
-
         if sim > maxsim:
             maxsim = sim
             argmax = i

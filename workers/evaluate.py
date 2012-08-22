@@ -5,7 +5,7 @@ from keydetection import *
 from glob import glob
 import pickle
 
-logging.basicConfig(level = logging.WARN)
+logging.basicConfig(level = logging.INFO)
 #Cache.set_caching_enabled(False)
 
 def evaluate(filenames_file, models_dir):
@@ -51,15 +51,14 @@ def evaluate(filenames_file, models_dir):
         if actual_key is None:
             continue
 
-        logging.info('\nTesting ' + mp3_file)
         try:
             test_matrix = get_test_matrix(mp3_file)
             key = get_key(model, test_matrix, unmarkov = True)
             diff = actual_key.compare(key)
-            logging.info('Predicted: %s; Actual: %s; Diff: %s' % (key, actual_key, diff.name()))
+            logging.info('%s: Predicted: %s; Actual: %s; Diff: %s' % (mp3_file, key, actual_key, diff.name()))
             scoreboard.add(diff)
         except Exception:
-            logging.warning('Failed to test %s' % mp3_file)
+            logging.warning('%s: Failed to test' % mp3_file)
 
     scoreboard.print_scores()
 

@@ -32,7 +32,7 @@ def evaluate(filenames_file, models_dir):
 
     for matrix in model:
         msum = np.sum(matrix.m)
-        matrix.add_constant(2) # laplace smoothing * 2
+        matrix.add_constant(1) # laplace smoothing
         if msum > 0: # normalise with sum from before smoothing, so that the smoothing constant is indeed constant
             matrix.m /= msum
 
@@ -54,7 +54,7 @@ def evaluate(filenames_file, models_dir):
         logging.info('\nTesting ' + mp3_file)
         try:
             test_matrix = get_test_matrix(mp3_file)
-            key = get_key(model, test_matrix, unmarkov = False)
+            key = get_key(model, test_matrix, unmarkov = True)
             diff = actual_key.compare(key)
             logging.info('Predicted: %s; Actual: %s; Diff: %s' % (key, actual_key, diff.name()))
             scoreboard.add(diff)

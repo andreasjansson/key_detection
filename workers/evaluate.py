@@ -55,7 +55,7 @@ def evaluate(filenames_file, models_dir):
         try:
             test_matrix = get_test_matrix(mp3_file)
 
-            if sum(np.sum(test_matrix.m)) == 0:
+            if np.sum(test_matrix.m) == 0:
                 logging.warning('Silent mp3: %s' % (mp3_file))
                 continue
 

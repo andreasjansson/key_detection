@@ -51,15 +51,15 @@ def evaluate(filenames_file, models_dir):
         if actual_key is None:
             continue
 
-        print '\nTesting ' + mp3_file
+        logging.info('\nTesting ' + mp3_file)
         try:
             test_matrix = get_test_matrix(mp3_file)
             key = get_key(model, test_matrix, unmarkov = False)
             diff = actual_key.compare(key)
-            print 'Predicted: %s; Actual: %s; Diff: %s' % (key, actual_key, diff.name())
+            logging.info('Predicted: %s; Actual: %s; Diff: %s' % (key, actual_key, diff.name()))
             scoreboard.add(diff)
         except Exception:
-            print 'Failed to test %s' % mp3_file
+            logging.warning('Failed to test %s' % mp3_file)
 
     scoreboard.print_scores()
 

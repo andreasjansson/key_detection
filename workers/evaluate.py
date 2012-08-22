@@ -5,7 +5,7 @@ from keydetection import *
 from glob import glob
 import pickle
 
-logging.basicConfig(level = logging.INFO)
+logging.basicConfig(level = logging.WARN)
 #Cache.set_caching_enabled(False)
 
 def evaluate(filenames_file, models_dir):

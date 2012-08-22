@@ -4,6 +4,7 @@ sys.path.insert(0, os.path.abspath('..'))
 from keydetection import *
 from glob import glob
 import pickle
+import numpy as np
 
 logging.basicConfig(level = logging.INFO)
 #Cache.set_caching_enabled(False)
@@ -53,6 +54,11 @@ def evaluate(filenames_file, models_dir):
 
         try:
             test_matrix = get_test_matrix(mp3_file)
+
+            if sum(np.sum(test_matrix.m)) == 0:
+                logging.warning('Silent mp3: %s' % (mp3_file))
+                continue
+
             key = get_key(model, test_matrix, unmarkov = True)
             diff = actual_key.compare(key)
             logging.info('%s: Predicted: %s; Actual: %s; Diff: %s' % (mp3_file, key, actual_key, diff.name()))

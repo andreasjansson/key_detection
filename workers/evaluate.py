@@ -7,7 +7,7 @@ import pickle
 import numpy as np
 
 logging.basicConfig(level = logging.INFO)
-Cache.set_caching_enabled(True)
+Cache.set_caching_enabled(False)
 
 def evaluate(filenames_file, models_dir):
 
@@ -72,7 +72,7 @@ def evaluate(filenames_file, models_dir):
     
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description = 'bigdata')
+    parser = argparse.ArgumentParser(description = 'evaluate')
     parser.add_argument('file')
     parser.add_argument('models_dir')
     args = parser.parse_args()

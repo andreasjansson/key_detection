@@ -8,6 +8,8 @@ import re
 import tempfile
 import logging
 
+from key import *
+
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
 def get_key(training_matrices, test_matrix, unmarkov = False):

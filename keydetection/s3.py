@@ -1,6 +1,7 @@
 import tempfile
 import boto.s3.key
 import boto.s3.bucket
+import os
 
 def s3_upload(bucket_name, local_filename, s3_filename):
     conn = boto.connect_s3()

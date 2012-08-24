@@ -33,7 +33,7 @@ def evaluate(filenames_file, models_dir):
 
     for matrix in model:
         msum = np.sum(matrix.m)
-        #matrix.add_constant(1) # laplace smoothing
+        matrix.add_constant(1) # laplace smoothing
         if msum > 0: # normalise with sum from before smoothing, so that the smoothing constant is indeed constant
             matrix.m /= msum
 

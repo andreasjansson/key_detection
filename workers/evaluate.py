@@ -64,7 +64,7 @@ def evaluate(filenames_file, models_dir):
             logging.info('%s: Predicted: %s; Actual: %s; Diff: %s' % (mp3_file, key, actual_key, diff.name()))
             scoreboard.add(diff)
         except Exception, e:
-            logging.warning('%s: Failed to test: ' % (mp3_file, e))
+            logging.warning('%s: Failed to test: %s' % (mp3_file, e))
 
     scoreboard.print_scores()
 

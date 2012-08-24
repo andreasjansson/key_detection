@@ -59,12 +59,12 @@ def evaluate(filenames_file, models_dir):
                 logging.warning('Silent mp3: %s' % (mp3_file))
                 continue
 
-            key = get_key(model, test_matrix, unmarkov = False)
+            key = get_key(model, test_matrix, unmarkov = True)
             diff = actual_key.compare(key)
             logging.info('%s: Predicted: %s; Actual: %s; Diff: %s' % (mp3_file, key, actual_key, diff.name()))
             scoreboard.add(diff)
         except Exception, e:
-            logging.warning('%s: Failed to test: ' % (mp3_file, str(e)))
+            logging.warning('%s: Failed to test: ' % (mp3_file, e))
 
     scoreboard.print_scores()
 

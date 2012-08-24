@@ -7,42 +7,50 @@ from audio import *
 import logging
 
 class MarkovMatrix:
+    '''
+    An width x width Markov matrix, where the rows are the "from" states,
+    and the columns are the "to" states.
+    '''
 
-    def __init__(self, width = None, order = 1):
+    def __init__(self, width = None):
         if width is None:
             self.width = 0
             self.m = None
-            self.order = 0
         else:
             self.width = width
             self.m = np.zeros(shape = (width, width))
-            self.order = order
 
     @staticmethod
     def from_matrix(m):
+        '''
+        Create a new MarkovMatrix from a raw matrix.
+        '''
         markov = MarkovMatrix()
         markov.m = m
         markov.width = np.shape(m)[0]
-        markov.order = markov.height / markov.width
         return markov
 
-    def increment(self, klang1, klang2): #klangs):
-
-        
-
+    def increment(self, klang1, klang2):
+        '''
+        Increment the transition count from klang1 to klang2.
+        '''
         x = klang1.get_number()
         y = klang2.get_number()
 
         self.m[x][y] += 1
 
-    # "transpose" in the musical sense, not matrix transposition
     def transpose_key(self, delta):
+        '''
+        Transpose the MarkovMatrix from one key to another, by delta semitones.
+        '''
         m = np.roll(self.m, delta % self.width, 0)
         m = np.roll(m, delta % self.width, 1)
         return MarkovMatrix.from_matrix(m)
 
-    # mutable for performance
     def add(self, other):
+        '''
+        Add the other matrix to this matrix, cell by cell.
+        '''
         if np.shape(self.m) != np.shape(other.m):
             raise Error('Cannot add markov matrices of different shapes')
         for i in range(self.width):
@@ -50,31 +58,64 @@ class MarkovMatrix:
                 self.m[i][j] += other.m[i][j]
 
     def add_constant(self, k):
+        '''
+        Add a constant value to each cell of the matrix. Useful in
+        Laplace smoothing.
+        '''
         for i in range(self.width):
             for j in range(self.width):
                 self.m[i][j] += k
 
+    def multiply(self, factor):
+        '''
+        Multiply each cell of the matrix with a constant.
+        '''
+        for i in range(self.width):
+            for j in range(self.width):
+                self.m[i][j] *= factor
+
     def similarity(self, other):
+        '''
+        Compute the similarity of two matrices by taking the sum of
+        the product of the cells of the two matrices.
+        '''
         return np.dot(self.m.ravel(), other.m.ravel())
 
     def similarity_unmarkov(self, other):
+        '''
+        Compute the similarity as the dot product of the column sums
+        of two matrices.
+        '''
         return np.dot(self.get_unmarkov_array(), other.get_unmarkov_array())
 
     def normalise(self):
+        '''
+        Normalise the matrix so that the sum of the values of cells add up
+        to 1.
+        '''
         sum = np.sum(self.m)
         if sum > 0:
             self.m /= sum
 
-    # add up all columns to get the relative frequencies of the "to"
-    # values in the klang analysis. known bug: first klang is discarded.
     def get_unmarkov_array(self):
+        '''
+        Return a vector of the column sums of the matrix. This effectively
+        returns the number of occurances of each of the 144 Zweiklangs, discarding
+        the first one.
+        '''
         return self.m.sum(axis = 0)
+
+    def get_density(self):
+        return len(np.where(self.m == 0)[0]) / float(self.width ** 2)
 
     def __repr__(self):
         s = np.shape(self.m)
         return '<Matrix %dx%d sum %f>' % (s[0], s[1], np.sum(self.m))
 
     def print_summary(self, max_lines = 20):
+        '''
+        Print a dump of the most common transitions.
+        '''
         # in numpy most things are mutable. side effects everywhere,
         # so need to copy all along.
         m = copy(self.m)
@@ -86,36 +127,40 @@ class MarkovMatrix:
         while(seq[i] > 0 and i < len(seq)):
             where = np.where(seq[i] == self.m)
             for fr0m, to in zip(where[0], where[1]):
-                print '%6s => %-6s: %.3f' % (klang_number_to_name(fr0m), klang_number_to_name(to), seq[i] * 100)
+                print '%6s => %-6s: %.3f' % (klang_number_to_name(fr0m), klang_number_to_name(to), seq[i])
                 lines += 1
                 if lines > max_lines:
                     return
             i += 1
 
-    def get_density(self):
-        return len(np.where(self.m == 0)[0]) / float(self.width ** 2)
+    def print_summary_unmarkov(self, max_lines = 20):
+        '''
+        Print a dump of the most common klangs.
+        '''
+        unmarkov = self.get_unmarkov_array()
+        unmarkov = zip(range(self.width ** 2), unmarkov)
+        unmarkov.sort(key = operator.itemgetter(1))
+        for klang_number, score in unmarkov[:max_lines]:
+            print '%6s: %.3f' % (klang_number_to_name(klang_number), score)
 
-    def multiply(self, factor):
-        for i in range(self.width):
-            for j in range(self.width):
-                self.m[i][j] *= factor
 
 def aggregate_matrices(matrices_list):
+    '''
+    Add a list of markov matrices.
+    '''
     aggregate_matrices = [MarkovMatrix(12 * 12) for i in range(12 * 2)]
     for matrices in matrices_list:
         if matrices is not None:
             for i in range(24):
                 aggregate_matrices[i].add(matrices[i])
-                
-
-    for i, matrix in enumerate(aggregate_matrices):
-        if i >= 12:
-            minor_key_attenuation_factor = 1
-            matrix.multiply(minor_key_attenuation_factor)
 
     return aggregate_matrices
 
-def get_aggregate_markov_matrices(filenames):
+def get_trained_model(filenames):
+    '''
+    Helper function that takes a list of (mp3_filename, keylab_filename) tuples
+    and returns a trained model consisting of 24 144x144 matrices.
+    '''
     aggregates = [MarkovMatrix(12 * 12) for i in range(12 * 2)]
     n = 1
     matrices_list = []
@@ -135,8 +180,8 @@ def get_aggregate_markov_matrices(filenames):
 
 def get_markov_matrices(keylab, klangs):
     '''
-    Return one or two matrices in a dict
-    keyed by mode.
+    Helper function that returns 12 major and 12 minor markov matrices
+    learned from the keylab and klangs.
     '''
     mwidth = 12 * 12
 
@@ -171,6 +216,10 @@ def get_markov_matrices(keylab, klangs):
 
 
 def get_training_matrices(mp3, keylab_file):
+    '''
+    Helper that wraps extracts klangs from mp3 and keylab from keylab_file
+    and passes them to get_markov_matrices.
+    '''
     cache = Cache('training', '%s:%s' % (mp3, keylab_file))
     if cache.exists():
         matrices = cache.get()
@@ -198,7 +247,9 @@ def get_training_matrices(mp3, keylab_file):
     return matrices
 
 def get_test_matrix(mp3):
-
+    '''
+    Returns a single markov matrix from an mp3.
+    '''
     cache = Cache('test', mp3)
     if cache.exists():
         return cache.get()
@@ -216,56 +267,3 @@ def get_test_matrix(mp3):
     cache.set(matrix)
 
     return matrix
-
-def get_key(training_matrices, test_matrix, unmarkov = False):
-    argmax = -1
-    maxsim = 0
-    for i, matrix in enumerate(training_matrices):
-
-        if unmarkov:
-            sim = matrix.similarity_unmarkov(test_matrix)
-        else:
-            sim = matrix.similarity(test_matrix)
-
-        if sim > maxsim:
-            maxsim = sim
-            argmax = i
-
-    argmax = argmax % 24
-    if argmax < 12:
-        return MajorKey(argmax)
-    else:
-        return MinorKey(argmax - 12)
-
-def get_pitch_class_model():
-    major_matrix = MarkovMatrix(12 * 12)
-    minor_matrix = MarkovMatrix(12 * 12)
-
-    temperley_major = [0.748, 0.060, 0.488, 0.082, 0.670, 0.460,
-                       0.096, 0.715, 0.104, 0.366, 0.057, 0.400]
-
-    temperley_minor = [0.712, 0.084, 0.474, 0.618, 0.049, 0.460,
-                       0.105, 0.747, 0.404, 0.067, 0.133, 0.330]
-
-    for from1 in range(12):
-        for from2 in range(12):
-            for to1 in range(12):
-                for to2 in range(12):
-
-                    major_matrix.m[from1 * 12 + from2, to1 * 12 + to2] = \
-                        math.sqrt(temperley_major[from1] ** 2 + temperley_major[from2] ** 2) * \
-                        math.sqrt(temperley_major[to1] ** 2 + temperley_major[to2] ** 2)
-                    minor_matrix.m[from1 * 12 + from2, to1 * 12 + to2] = \
-                        math.sqrt(temperley_minor[from1] ** 2 + temperley_minor[from2] ** 2) * \
-                        math.sqrt(temperley_minor[to1] ** 2 + temperley_minor[to2] ** 2)
-
-
-    model = [None] * 24
-    for i in range(12):
-        model[i] = major_matrix.transpose_key(i)
-        model[i + 12] = minor_matrix.transpose_key(i)
-
-    for m in model:
-        m.normalise()
-
-    return model

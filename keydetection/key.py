@@ -2,6 +2,9 @@ from util import *
 import re
 
 class Key(object):
+    '''
+    Base class for major and minor keys.
+    '''
 
     def __init__(self, root):
         self.root = root
@@ -16,6 +19,10 @@ class Key(object):
         return not self.__eq__(other)
 
     def compare(self, other):
+        '''
+        Returns the difference between this key and other in terms as
+        same, perfect fifth, relative major/minor, parallel major/minor, or other.
+        '''
         if self == other:
             return KeySame()
 
@@ -64,8 +71,6 @@ class MinorKey(Key):
             return KeyRelative()
         return Key.compare(self, other)
 
-
-# Based on http://www.music-ir.org/mirex/wiki/2012:Audio_Key_Detection#Evaluation_Procedures
 
 class KeyDiff(object):
     def __hash__(self):

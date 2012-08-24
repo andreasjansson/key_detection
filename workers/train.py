@@ -15,19 +15,20 @@ def train(filenames_file, model_filename, local_model = False):
         for line in f.readlines():
             filenames.append(line.split('::'))
 
-    model = get_aggregate_markov_matrices(filenames)
+    model = get_trained_model(filenames)
     model_local_filename = '/tmp/model.pkl'
     with open(model_local_filename, 'wb') as f:
         pickle.dump(model, f)
 
     if local_model:
-        pass
-        #os.copy(model_local_filename, model_filename)
+        import shutil
+        shutil.copy(model_local_filename, model_filename)
+        os.unlink(model_local_filename)
     else:
         s3_upload('andreasjansson', model_local_filename, model_filename)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description = 'bigdata')
+    parser = argparse.ArgumentParser(description = 'train')
     parser.add_argument('-v', '--verbose', action = 'store_true')
     parser.add_argument('-l', '--local', action = 'store_true')
     parser.add_argument('file')

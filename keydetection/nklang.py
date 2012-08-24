@@ -5,6 +5,9 @@ import numpy as np
 from util import *
 
 class Nklang(object):
+    '''
+    "Abstract" base class for all types of nklang.
+    '''
 
     def get_number(self):
         raise NotImplementedError()
@@ -13,6 +16,9 @@ class Nklang(object):
         raise NotImplementedError()
 
 class Nullklang(Nklang):
+    '''
+    Used for silent sections.
+    '''
 
     def __init__(self):
         pass
@@ -30,6 +36,11 @@ class Nullklang(Nklang):
         return '<Nullklang>'
 
 class Anyklang(object):
+    '''
+    An nklang, where n > 0.
+    Numerically represented as sum_{i = 0}^{n - 1} k_i * 12^i, where
+    k_i is the i:th note in the klang.
+    '''
 
     def __init__(self, notes, n):
         self.original_notes = copy(notes)
@@ -54,47 +65,11 @@ class Anyklang(object):
         return '<%d-klang: %s>' % (self.get_n(), self.get_name())
 
 
-class Einklang(Nklang):
-
-    def __init__(self, n):
-        self.n = n
-    
-    def get_name(self):
-        return note_names[self.n]
-
-    # effectively a zweiklang, with n1 == n2
-    def get_number(self):
-        return self.n + 12 * self.n
-
-    def transpose(self, delta):
-        return Einklang((self.n + delta) % 12)
-
-    def __repr__(self):
-        return '<Einklang: %s>' % note_names[self.n]
-
-class Zweiklang(Nklang):
-
-    def __init__(self, first, second, sort = False):
-        if sort and first > second:
-            self.first = second
-            self.second = first
-        else:
-            self.first = first
-            self.second = second
-        
-    def get_name(self):
-        return note_names[self.first] + ', ' + note_names[self.second]
-
-    def get_number(self):
-        return self.first + 12 * self.second
-        
-    def transpose(self, delta):
-        return Zweiklang((self.first + delta) % 12, (self.second + delta) % 12)
-
-    def __repr__(self):
-        return '<Zweiklang: %s, %s>' % (note_names[self.first], note_names[self.second])
 
 def klang_number_to_name(number):
+    '''
+    Helper that returns the name of a Zweiklang.
+    '''
     if number == -1:
         return 'Silence'
     else:

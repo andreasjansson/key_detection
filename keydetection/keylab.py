@@ -1,7 +1,9 @@
 import csv
 import os.path
 import re
+
 from key import *
+from util import *
 
 simple_keymap = {'C': MajorKey(0), 'C#': MajorKey(1), 'Db': MajorKey(1),
                  'D': MajorKey(2), 'D#': MajorKey(3), 'Eb': MajorKey(3),
@@ -18,6 +20,9 @@ simple_keymap = {'C': MajorKey(0), 'C#': MajorKey(1), 'Db': MajorKey(1),
                  'Silence': None}
 
 class LabParser(object):
+    '''
+    Parse annotated lab files.
+    '''
 
     def parse_keys(self, filename, keymap = simple_keymap):
         handle = open(filename, 'r')
@@ -49,6 +54,9 @@ class LabParser(object):
         return beats
 
 class KeyLab(object):
+    '''
+    Python representation of contents of lab file.
+    '''
 
     def __init__(self, lab_filename):
         lab_filename = make_local(lab_filename, '/tmp/lab.lab')
@@ -84,6 +92,10 @@ class KeyLab(object):
         return len(self.real_keys())
 
 class LilyKeyLab(KeyLab):
+    '''
+    Extend KeyLab to accept a lilypond file in place of
+    a lab file. Assumes only one key.
+    '''
 
     def __init__(self, lab_filename):
         lab_filename = make_local(lab_filename, '/tmp/ly.ly')
@@ -102,6 +114,10 @@ class LilyKeyLab(KeyLab):
         return [self.key]
 
 class SingleKeyLab(KeyLab):
+    '''
+    Extend KeyLab to create an artificial KeyLab instances
+    with only one, pre-defined key.
+    '''
 
     def __init__(self, key_name):
         self.key = Key.from_repr(key_name)
@@ -128,6 +144,14 @@ class Beat(object):
 
 
 def get_key_lab(filename):
+    '''
+    Get a KeyLab instance from a string of text. If the string looks
+    something like "key:<MajorKey G#>", a SingleKeyLab instance in G#
+    major is returned. If the string is a filename ending in .lab a
+    real KeyLab instance is returned. If it's a .ly GNU LilyPond file,
+    the file is parsed using the functions in lilyparser.py, and a
+    LilyKeyLab instance is returned.
+    '''
 
     if filename.find('key:') == 0:
         return SingleKeyLab(filename[4:])

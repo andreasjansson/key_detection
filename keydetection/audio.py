@@ -11,11 +11,18 @@ from StringIO import StringIO
 import matplotlib.pyplot as plt
 import logging
 
+from util import *
 from chroma import *
 
 class AudioReader(object):
+    '''
+    Base class for mp3 and wav readers.
+    '''
 
-    def _process(self, samp_rate, stereo, length, downsample_factor):
+    def process(self, samp_rate, stereo, length, downsample_factor):
+        '''
+        Pre-process audio by making it mono and downsampling.
+        '''
 
         logging.debug('Making mono')
 
@@ -27,9 +34,10 @@ class AudioReader(object):
         if length and len(mono) / samp_rate > length:
             mono = mono[0:int(length * samp_rate)]
 
-        logging.debug('Downsamping')
+        logging.debug('Padding')
         # pad with zeroes before downsampling
         padding = np.array([0] * (downsample_factor - (len(mono) % downsample_factor)), dtype = mono.dtype)
+        logging.debug('Making mono')
         mono = np.concatenate((mono, padding))
         # downsample
         if downsample_factor > 1:
@@ -43,31 +51,42 @@ class WavReader(AudioReader):
 
     def read(self, wav_filename, length = None, downsample_factor = 4):
         logging.debug('About to read wavfile')
-        samp_rate, stereo = wavfile_read_silent(wav_filename)
-        return self._process(samp_rate, stereo, length, downsample_factor)
+        samp_rate, stereo = WavReader.read_silent(wav_filename)
+        return self.process(samp_rate, stereo, length, downsample_factor)
+
+    @staticmethod
+    def read_silent(wav_filename):
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        samp_rate, stereo = wavfile.read(wav_filename)
+        sys.stdout = old_stdout
+        return (samp_rate, stereo)
+
+
 
 class Mp3Reader(AudioReader):
 
     def read(self, mp3_filename, length = None, downsample_factor = 4):
-        """
+        '''
         Returns (sampling_rate, data), where the sampling rate is the
         original sampling rate, downsampled by a factor of 4, and
         the data signal is a downsampled, mono (left channel) version
         of the original signal.
-        """
+        '''
 
         mp3_filename = make_local(mp3_filename, '/tmp/mp3.mp3')
 
+        # first we must convert to wav
         wav_file = tempfile.NamedTemporaryFile(suffix = '.wav', delete = False)
         wav_filename = wav_file.name
         wav_file.close()
-        self._mp3_to_wav(mp3_filename, wav_filename)
+        self.mp3_to_wav(mp3_filename, wav_filename)
         
-        samp_rate, stereo = wavfile_read_silent(wav_filename)
+        samp_rate, stereo = WavReader.read_silent(wav_filename)
         os.unlink(wav_filename)
-        return self._process(samp_rate, stereo, length, downsample_factor)
+        return self.process(samp_rate, stereo, length, downsample_factor)
         
-    def _mp3_to_wav(self, mp3_filename, wav_filename):
+    def mp3_to_wav(self, mp3_filename, wav_filename):
         if mp3_filename.find('http') == 0:
             mp3_filename = download(mp3_filename, '.mp3')
 
@@ -79,12 +98,21 @@ class Mp3Reader(AudioReader):
             raise IOError('Failed to create wav file')
 
 class SpectrumQuantileFilter(object):
+    '''
+    A really crude spectral peak detector / filter that works by splitting the spectrum
+    into fixed size windows and setting all spectral bins that have an amplitude
+    below a certain amplitude quantile for that window to 0.
+    '''
 
-    def __init__(self, quantile = 99, window_width = 200):
+    def __init__(self, quantile = 99, window_width = 200, upper_bound = None):
         self.quantile = quantile
         self.window_width = window_width
+        self.upper_bound = upper_bound
 
     def filter(self, spectrum):
+        if self.upper_bound:
+            spectrum = spectrum[:self.upper_bound]
+
         filtered = []
         for i in range(0, len(spectrum), self.window_width):
             subspec = list(spectrum[i:(i + self.window_width)])
@@ -97,8 +125,22 @@ class SpectrumQuantileFilter(object):
         return filtered
 
 class SpectrumGrainFilter(object):
+    '''
+    Imagine a line plot of a spectrum, but upside down. Now place tiny grains of
+    sand along the x-axis, at the spectral bin points. Drop the grains and let
+    them fall down on the spectrum. They slide on the gradients on the spectrum
+    and end up in little groups at the bottom of the spectrum where they can't slide
+    or fall any further. When all grains have stopped moving, set all spectral bins
+    that have no grains in them to 0. Flip it back around the x-axis. Filtered spectrum.
+    '''
+
+    def __init__(self, upper_bound = None):
+        self.upper_bound = upper_bound
 
     def filter(self, spectrum):
+        if self.upper_bound:
+            spectrum = spectrum[:self.upper_bound]
+
         moving_grains = range(len(spectrum))
         stable_grains = []
 
@@ -137,9 +179,14 @@ class SpectrumGrainFilter(object):
 
 
 def get_klangs(mp3 = None, audio = None):
+    '''
+    Helper function that reads and pre-processes an mp3, computes the spectrogram,
+    filters each spectrum in the spectrogram, computes the chromagram for each spectrum,
+    and for each chromagram, computes the nklang.    
+    '''
     fs = 11025
-    #winlength = 8192
     winlength = 8192 / 2
+    max_fq = 1000
 
     if mp3:
         logging.debug('Reading mp3')
@@ -150,15 +197,20 @@ def get_klangs(mp3 = None, audio = None):
 
     logging.debug('Filtering spectrum')
 
-    filt = SpectrumQuantileFilter(98, 100)
+    upper_bound = int(math.ceil(winlength * max_fq / (fs / 2)))
+
+    filt = SpectrumQuantileFilter(98, 100, upper_bound = upper_bound)
     sf = map(filt.filter, s)
 
-    filt = SpectrumGrainFilter()
+    filt = SpectrumGrainFilter(upper_bound)
     sf = map(filt.filter, sf)
+
+    # add the missing zeroes at the end to get the length right
+    sf = map(lambda spectrum: spectrum + [0] * (winlength - upper_bound), sf)
 
     bins = 5
     logging.debug('Getting chromagram')
-    cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, 1000)) for ss in sf]
+    cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, max_fq)) for ss in sf]
 
     logging.debug('Tuning')
     tuner = Tuner(bins, global_tuning = True)
@@ -168,16 +220,11 @@ def get_klangs(mp3 = None, audio = None):
     klangs = [(i * winlength / float(fs), t.get_nklang()) for i, t in enumerate(ts)]
     return klangs
 
-def wavfile_read_silent(wav_filename):
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    samp_rate, stereo = wavfile.read(wav_filename)
-    sys.stdout = old_stdout
-    return (samp_rate, stereo)
-
 def generate_spectrogram(audio, window_size):
+    '''
+    Hanning-windowed spectrogram
+    '''
     for t in xrange(0, len(audio), window_size):
-        # windowed spectrogram
         actual_window_size = min(window_size, len(audio) - t)
         windowed_signal = audio[t:(t + window_size)] * np.hanning(actual_window_size)
         spectrum = abs(scipy.fft(windowed_signal))
@@ -185,6 +232,9 @@ def generate_spectrogram(audio, window_size):
         yield (t, spectrum)
 
 def normalise_spectra(spectra):
+    '''
+    Normalise to 1.
+    '''
     spectra = copy(spectra)
     for i, spectrum in enumerate(spectra):
         m = max(spectrum)
@@ -194,19 +244,24 @@ def normalise_spectra(spectra):
     return spectra
 
 def downsample(sig, factor):
-    # first filter, then downsample
-
+    '''
+    Low-pass filter using simple FIR, then pick every n sample, where n is
+    the downsampling factor.
+    '''
     logging.debug('Creating filter')
     fir = signal.firwin(61, 1.0 / factor)
     logging.debug('Convolving')
     sig2 = np.convolve(sig, fir, mode="valid")
     logging.debug('Downsampling')
-    sig2 = np.array([int(x) for i, x in enumerate(sig2) if i % factor == 0], dtype = sig.dtype)
+    sig2 = [int(x) for i, x in enumerate(sig2) if i % factor == 0]
     logging.debug('Done downsampling')
     return sig2
 
 def plot_spectrum(spectrum, fs = 11025, zoom = None, clear = True,
                   line = 'b-'):
+    '''
+    A graph says more than a thousand words. Or less.
+    '''
     if clear:
         plt.clf()
     plt.plot(spectrum, line)

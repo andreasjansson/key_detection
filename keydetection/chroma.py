@@ -8,9 +8,9 @@ from nklang import *
 from util import *
 
 class Chromagram(object):
-    """
+    '''
     This an n-bin narrow-band chromagram tuned to 440Hz.
-    """
+    '''
 
     def __init__(self, values = None, chroma_bins = None):
 
@@ -26,46 +26,41 @@ class Chromagram(object):
             self.chroma_bins = len(values)
 
     @staticmethod
-    def from_spectrum(spectrum, samp_rate,
-                      chroma_bins = 12, band_fqs = None):
-        """
-        spectrum is only left half of the spectrum, so its length
-        is signal_length / 2.
-        """
-
+    def from_spectrum(spectrum, samp_rate, chroma_bins = 12, band_fqs = None):
+        '''
+        Create a new chromagram from a spectrum. If band_fqs is specified,
+        it must be a tuple (low, high), that define the lower and higher
+        bounds of the spectrum.
+        '''
         chromagram = Chromagram(chroma_bins = chroma_bins)
-        window_size = len(spectrum) * 2
+        window_size = len(spectrum)
         samp_rate = float(samp_rate)
+        nyquist = samp_rate / 2
 
         if band_fqs is not None:
-            band = map(lambda b: window_size * b / samp_rate, band_fqs)
-            subspectrum = spectrum[int(band[0]):int(band[1])]
-            freqs = np.arange(band[0], band[1]) * samp_rate / window_size
+            low, high = map(lambda b: int(window_size * b / nyquist), band_fqs)
+            subspectrum = spectrum[low:high]
+            freqs = np.arange(low, high) * nyquist / window_size
         else:
             subspectrum = spectrum
-            freqs = np.arange(0, len(spectrum)) * samp_rate / window_size
+            freqs = np.arange(0, len(spectrum)) * nyquist / window_size
 
         c0 = 16.3516
         for i, val in enumerate(subspectrum):
             freq = freqs[i]
             if freq > 0: # disregard dc offset
                 bin = int(round(chroma_bins * math.log(freq / c0, 2))) % chroma_bins
-                # TODO: document sqrt
+                # Since the FIR filter we use before downsampling isn't very
+                # steep, we take the sqrt of the spectrum to even it out a bit.
                 chromagram.values[bin] += math.sqrt(val)
 
         return chromagram
 
-    def normalise(self):
-        if self.values.max() == 0:
-            self.values = np.zeros(chroma_bins)
-        else:
-            self.values = self.values / self.values.max()
-
-    def plot(self):
-        plot_chroma(self.values, self.chroma_bins)
-
     def get_nklang(self, threshold = .1, silent = 100, nklang_n = 2, filter_adjacent = True):
-        # first, determine if it's a nullklang, einklang or zweiklang
+        '''
+        Compute the nklang for the chromagram by sorting the amplitudes of the chromagram,
+        and returning the am nklang made from the bin indices of the n highest amplitudes.
+        '''
         sorted_values = np.sort(self.values)[::-1]
 
         amps = []
@@ -87,8 +82,10 @@ class Chromagram(object):
             note_amps.append((note, amp))
             values[note] = 0
 
+        # if two high amplitude chroma bins are right next to each other, something
+        # fishy might be going on. it's quite likely that one of them is the result
+        # of spectral side lobes.
         if filter_adjacent:
-
             note_amps.sort(key = operator.itemgetter(1))
             all_amps = [0] * 12
             for n, a in note_amps:
@@ -128,17 +125,16 @@ class Chromagram(object):
 
 
 class Tuner(object):
+    '''
+    Tune an n*x bin chromagram to an n bin chromagram.
+    '''
 
-    def __init__(self, bins_per_pitch, bands = 1, pitches = 12, global_tuning = False):
+    def __init__(self, bins_per_pitch, pitches = 12, global_tuning = True):
         self.bins_per_pitch = bins_per_pitch
-        self.bands = bands
         self.pitches = pitches
         self.global_tuning = global_tuning
 
     def tune(self, chromas):
-        """
-        Tune multiple bands of chromagrams.
-        """
         tuned_chromas = []
 
         if self.global_tuning:
@@ -148,7 +144,6 @@ class Tuner(object):
             max_bin = max_bins.index(max(max_bins))
 
         for chroma in chromas:
-
             if not self.global_tuning:
                 max_bin = self.get_max_bin(chroma)
 
@@ -164,19 +159,11 @@ class Tuner(object):
         return bins.index(max(bins))
 
     def tune_chroma(self, chroma, max_bin):
-        tuned = []
-        for i in range(self.bands):
-            tuned += self.tune_band(
-                chroma.values[(i * self.pitches * self.bins_per_pitch) :
-                        ((i + 1) * self.pitches * self.bins_per_pitch)], max_bin)
-        return Chromagram(tuned)
-
-    def tune_band(self, values, max_bin):
-        values = self.roll_values(values, max_bin)
+        values = self.roll_values(chroma.values, max_bin)
         tuned_values = [0] * self.pitches
         for i, value in enumerate(values):
             tuned_values[int(math.floor(i / self.bins_per_pitch))] += value
-        return tuned_values
+        return Chromagram(tuned_values)
 
     def roll_values(self, values, max_bin):
         mid = math.floor(self.bins_per_pitch / 2)

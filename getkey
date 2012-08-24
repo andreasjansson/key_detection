@@ -8,8 +8,15 @@ from keydetection import *
 Cache.set_caching_enabled(False)
 
 def test(model, mp3):
-    test_matrix = get_test_matrix(mp3)
-    key = get_key(model, test_matrix)
+
+    for matrix in model:
+        msum = np.sum(matrix.m)
+        matrix.add_constant(1) # laplace smoothing
+        if msum > 0: # normalise with sum from before smoothing, so that the smoothing constant is indeed constant
+            matrix.m /= msum
+
+    test_matrix = get_test_matrix(make_local(mp3, '/tmp/tmp.mp3'))
+    key = get_key(model, test_matrix, unmarkov = True)
     print key
     return key
 

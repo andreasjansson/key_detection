@@ -1,7 +1,8 @@
-def s3_upload(bucket_name, local_filename, s3_filename):
-    import boto.s3.key
-    import boto.s3.bucket
+import tempfile
+import boto.s3.key
+import boto.s3.bucket
 
+def s3_upload(bucket_name, local_filename, s3_filename):
     conn = boto.connect_s3()
     bucket = boto.s3.bucket.Bucket(conn, bucket_name)
     key = boto.s3.key.Key(bucket)
@@ -11,9 +12,6 @@ def s3_upload(bucket_name, local_filename, s3_filename):
     
 
 def s3_download(bucket_name, s3_filename):
-    import boto.s3.key
-    import boto.s3.bucket
-
     local_file = tempfile.NamedTemporaryFile(suffix = os.path.splitext(s3_filename)[1], delete = False)
     conn = boto.connect_s3()
     bucket = boto.s3.bucket.Bucket(conn, bucket_name)
@@ -24,8 +22,6 @@ def s3_download(bucket_name, s3_filename):
     return local_file.name
 
 def s3_delete(bucket_name, s3_filename):
-    import boto.s3.key
-    import boto.s3.bucket
     conn = boto.connect_s3()
     bucket = boto.s3.bucket.Bucket(conn, bucket_name)
     try:

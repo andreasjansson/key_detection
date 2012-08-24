@@ -7,7 +7,7 @@ import pickle
 import numpy as np
 
 logging.basicConfig(level = logging.INFO)
-Cache.set_caching_enabled(False)
+Cache.set_caching_enabled(True)
 
 def evaluate(filenames_file, models_dir):
 
@@ -63,8 +63,8 @@ def evaluate(filenames_file, models_dir):
             diff = actual_key.compare(key)
             logging.info('%s: Predicted: %s; Actual: %s; Diff: %s' % (mp3_file, key, actual_key, diff.name()))
             scoreboard.add(diff)
-        except Exception:
-            logging.warning('%s: Failed to test' % mp3_file)
+        except Exception, e:
+            logging.warning('%s: Failed to test: ' % (mp3_file, str(e)))
 
     scoreboard.print_scores()
 

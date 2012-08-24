@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+import pickle
+import argparse
+
+from keydetection import *
+
+Cache.set_caching_enabled(False)
+
+def test(model, mp3):
+    test_matrix = get_test_matrix(mp3)
+    key = get_key(model, test_matrix)
+    print key
+    return key
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description = 'Key detector model inspector')
+    parser.add_argument('-m', '--model', default = 'model.pkl')
+    parser.add_argument('mp3')
+    args = parser.parse_args()
+
+    with open(args.model, 'rb') as f:
+        model = pickle.load(f)
+
+    test(model, args.mp3)

@@ -1,4 +1,4 @@
-from util import *
+import util
 import re
 
 class Key(object):
@@ -43,7 +43,7 @@ class Key(object):
         match = re.search(r'<(Major|Minor)Key: ([A-G]#?)>', string)
         if not match:
             return None
-        root = note_names.index(match.group(2))
+        root = util.note_names.index(match.group(2))
         if match.group(1) == 'Major':
             return MajorKey(root)
         else:
@@ -52,7 +52,7 @@ class Key(object):
 class MajorKey(Key):
 
     def __repr__(self):
-        return '<MajorKey: %s>' % note_names[self.root]
+        return '<MajorKey: %s>' % util.note_names[self.root]
 
     def compare(self, other):
         if isinstance(other, MinorKey) and \
@@ -63,7 +63,7 @@ class MajorKey(Key):
 class MinorKey(Key):
 
     def __repr__(self):
-        return '<MinorKey: %s>' % note_names[self.root]
+        return '<MinorKey: %s>' % util.note_names[self.root]
 
     def compare(self, other):
         if isinstance(other, MajorKey) and \

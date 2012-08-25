@@ -6,8 +6,8 @@ from glob import glob
 import pickle
 import numpy as np
 
-#logging.basicConfig(level = logging.INFO)
-#Cache.set_caching_enabled(False)
+logging.basicConfig(level = logging.INFO)
+Cache.set_caching_enabled(False)
 
 def evaluate(filenames_file, models_dir):
 

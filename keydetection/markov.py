@@ -86,10 +86,10 @@ class MarkovMatrix:
         Compute the similarity as the dot product of the column sums
         of two matrices.
         '''
-        #return np.dot(self.get_unmarkov_array(), other.get_unmarkov_array())
+        return np.dot(self.get_unmarkov_array(), other.get_unmarkov_array())
 
-        products = 1000 * self.get_unmarkov_array() * other.get_unmarkov_array()
-        return np.prod(filter(lambda x: x > 0, products))
+        #products = 1000 * self.get_unmarkov_array() * other.get_unmarkov_array()
+        #return np.prod(filter(lambda x: x > 0, products))
 
     def normalise(self):
         '''

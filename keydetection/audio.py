@@ -192,6 +192,8 @@ def get_klangs(mp3 = None, audio = None):
         logging.debug('Reading mp3')
         _, audio = Mp3Reader().read(mp3)
 
+    audio = audio[: fs * 30] # first 30 seconds
+
     logging.debug('Generating spectrum')
     s = [spectrum for (t, spectrum) in generate_spectrogram(audio, winlength)]
 

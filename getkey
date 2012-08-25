@@ -23,8 +23,12 @@ def test(model, mp3):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Key detector model inspector')
     parser.add_argument('-m', '--model', default = 'model.pkl')
+    parser.add_argument('-v', '--verbose', action = 'store_true')
     parser.add_argument('mp3')
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level = logging.DEBUG)
 
     with open(args.model, 'rb') as f:
         model = pickle.load(f)

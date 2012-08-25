@@ -88,6 +88,10 @@ class MarkovMatrix:
         '''
         return np.dot(self.get_unmarkov_array(), other.get_unmarkov_array())
 
+        #this = self.get_unmarkov_array()
+        #other = other.get_unmarkov_array()
+        
+
     def normalise(self):
         '''
         Normalise the matrix so that the sum of the values of cells add up

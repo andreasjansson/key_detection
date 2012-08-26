@@ -185,7 +185,7 @@ def get_klangs(mp3 = None, audio = None, time_limit = None):
     and for each chromagram, computes the nklang.    
     '''
     fs = 11025
-    winlength = 8192 / 4 # TODO: try with even smaller window length
+    winlength = 8192 / 1
 
     max_fq = 1000
 

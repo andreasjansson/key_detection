@@ -59,7 +59,7 @@ def evaluate(filenames_file, models_dir):
                 logging.warning('Silent mp3: %s' % (mp3_file))
                 continue
 
-            key = get_key(model, test_profile, unmarkov = True)
+            key = get_key(model, test_profile)
             diff = actual_key.compare(key)
             logging.info('%s: Predicted: %s; Actual: %s; Diff: %s' % (mp3_file, key, actual_key, diff.name()))
             scoreboard.add(diff)

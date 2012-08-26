@@ -187,7 +187,7 @@ def get_klangs(mp3 = None, audio = None, time_limit = None):
     fs = 11025
     winlength = 4096
 
-    max_fq = 2000
+    max_fq = 1000
 
     if mp3:
         logging.debug('Reading mp3')

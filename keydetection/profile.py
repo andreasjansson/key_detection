@@ -104,7 +104,7 @@ def get_trained_model(filenames, n = 2):
     return aggregates
 
 
-def get_training_profiles(mp3, keylab_file):
+def get_training_profiles(mp3, keylab_file, n = 2):
     cache = Cache('training', '%s:%s' % (mp3, keylab_file))
     if cache.exists():
         profiles = cache.get()
@@ -128,7 +128,7 @@ def get_training_profiles(mp3, keylab_file):
 
 
         # 12 major and 12 minor profiles
-        profiles = [Profile(mwidth) for i in range(12 * 2)]
+        profiles = [Profile(12 ** n) for i in range(12 * 2)]
         for t, klang in klangs:
             key = keylab.key_at(t)
 

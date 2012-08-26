@@ -7,7 +7,7 @@ import pickle
 import numpy as np
 
 logging.basicConfig(level = logging.INFO)
-Cache.set_caching_read_enabled(False)
+Cache.set_caching_read(False)
 
 def evaluate(filenames_file, models_dir):
 

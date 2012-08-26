@@ -7,7 +7,7 @@ import pickle
 import numpy as np
 
 logging.basicConfig(level = logging.INFO)
-Cache.set_caching_enabled(False)
+#Cache.set_caching_enabled(False)
 
 def evaluate(filenames_file, models_dir):
 
@@ -53,7 +53,7 @@ def evaluate(filenames_file, models_dir):
             continue
 
         try:
-            test_matrix = get_test_matrix(mp3_file)
+            test_matrix = get_test_matrix(mp3_file, time_limit = 30)
 
             if np.sum(test_matrix.m) == 0:
                 logging.warning('Silent mp3: %s' % (mp3_file))

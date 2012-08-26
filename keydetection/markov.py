@@ -249,15 +249,19 @@ def get_training_matrices(mp3, keylab_file):
 
     return matrices
 
-def get_test_matrix(mp3):
+def get_test_matrix(mp3, time_limit = None):
     '''
     Returns a single markov matrix from an mp3.
     '''
-    cache = Cache('test', mp3)
+
+    if time_limit:
+        cache = Cache('test_' + time_limit, mp3)
+    else:
+        cache = Cache('test', mp3)
     if cache.exists():
         return cache.get()
 
-    klangs = get_klangs(mp3)
+    klangs = get_klangs(mp3, time_limit = time_limit)
     matrix = MarkovMatrix(12 * 12)
     prev_klang = None
     for t, klang in klangs:

@@ -3,7 +3,7 @@ import argparse
 sys.path.insert(0, os.path.abspath('..'))
 from keydetection import *
 
-Cache.set_caching_enabled(False)
+Cache.set_caching_read_enabled(False)
 
 def train(filenames_file, model_filename, local_model = False):
 

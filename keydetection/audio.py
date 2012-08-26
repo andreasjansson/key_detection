@@ -178,7 +178,7 @@ class SpectrumGrainFilter(object):
         return filtspec
 
 
-def get_klangs(mp3 = None, audio = None, time_limit = None):
+def get_klangs(mp3 = None, audio = None, time_limit = None, n = 2):
     '''
     Helper function that reads and pre-processes an mp3, computes the spectrogram,
     filters each spectrum in the spectrogram, computes the chromagram for each spectrum,
@@ -221,7 +221,7 @@ def get_klangs(mp3 = None, audio = None, time_limit = None):
     ts = tuner.tune(cs)
 
     logging.debug('Returning klags')
-    klangs = [(i * winlength / float(fs), t.get_nklang()) for i, t in enumerate(ts)]
+    klangs = [(i * winlength / float(fs), t.get_nklang(n = n)) for i, t in enumerate(ts)]
     return klangs
 
 def generate_spectrogram(audio, window_size):

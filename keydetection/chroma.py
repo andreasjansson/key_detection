@@ -56,7 +56,7 @@ class Chromagram(object):
 
         return chromagram
 
-    def get_nklang(self, threshold = .1, silent = 100, nklang_n = 2, filter_adjacent = True):
+    def get_nklang(self, threshold = .1, silent = 100, n = 2, filter_adjacent = True):
         '''
         Compute the nklang for the chromagram by sorting the amplitudes of the chromagram,
         and returning the am nklang made from the bin indices of the n highest amplitudes.
@@ -65,7 +65,7 @@ class Chromagram(object):
 
         amps = []
         i = 0
-        while sorted_values[i] > silent and i < nklang_n:
+        while sorted_values[i] > silent and i < n:
             amps.append(sorted_values[i])
             i += 1
 
@@ -99,7 +99,7 @@ class Chromagram(object):
         else:
             notes = map(operator.itemgetter(0), note_amps)
 
-        return Anyklang(notes, nklang_n)
+        return Anyklang(notes, n)
 
     def plot(self, show = True, yticks = True):
         ind = np.arange(len(self.values))

@@ -53,7 +53,7 @@ def evaluate(filenames_file, models_dir):
             continue
 
         try:
-            test_profile = get_test_profile(mp3_file, time_limit = 30)
+            test_profile = get_test_profile(mp3_file, time_limit = 30, n = 3)
 
             if np.sum(test_profile.values) == 0:
                 logging.warning('Silent mp3: %s' % (mp3_file))

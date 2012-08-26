@@ -12,19 +12,16 @@ from key import *
 
 note_names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
-def get_key(training_matrices, test_matrix, unmarkov = False):
+def get_key(model, test_profile):
     '''
-    Computes the key based on a trained model (training_matrices) and
-    a test matrix.
+    Computes the key based on a trained model and
+    a test profile.
     '''
     argmax = -1
     maxsim = 0
-    for i, matrix in enumerate(training_matrices):
+    for i, profile in enumerate(model):
 
-        if unmarkov:
-            sim = matrix.similarity_unmarkov(test_matrix)
-        else:
-            sim = matrix.similarity(test_matrix)
+        sim = profile.similarity(test_profile)
 
         if sim > maxsim:
             maxsim = sim

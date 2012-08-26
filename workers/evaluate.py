@@ -25,17 +25,17 @@ def evaluate(filenames_file, models_dir):
         for model_file in model_files:
             with open(model_file, 'r') as f:
                 models.append(pickle.load(f))
-        model = aggregate_matrices(models)
+        model = Profile.aggregate_multiple(models)
         cache.set(model)
 
     with open('/tmp/aggregate.pkl', 'wb') as f:
         pickle.dump(model, f)
 
-    for matrix in model:
-        msum = np.sum(matrix.m)
-        matrix.add_constant(1) # laplace smoothing
-        if msum > 0: # normalise with sum from before smoothing, so that the smoothing constant is indeed constant
-            matrix.m /= msum
+    for profile in model:
+        psum = np.sum(profile.values)
+        profile.add_constant(1) # laplace smoothing
+        if psum > 0: # normalise with sum from before smoothing, so that the smoothing constant is indeed constant
+            profile.values /= psum
 
     scoreboard = Scoreboard()
     for mp3_file, lab_file in filenames:
@@ -53,13 +53,13 @@ def evaluate(filenames_file, models_dir):
             continue
 
         try:
-            test_matrix = get_test_matrix(mp3_file, time_limit = 30)
+            test_profile = get_test_profile(mp3_file, time_limit = 30)
 
-            if np.sum(test_matrix.m) == 0:
+            if np.sum(test_profile.values) == 0:
                 logging.warning('Silent mp3: %s' % (mp3_file))
                 continue
 
-            key = get_key(model, test_matrix, unmarkov = True)
+            key = get_key(model, test_profile, unmarkov = True)
             diff = actual_key.compare(key)
             logging.info('%s: Predicted: %s; Actual: %s; Diff: %s' % (mp3_file, key, actual_key, diff.name()))
             scoreboard.add(diff)

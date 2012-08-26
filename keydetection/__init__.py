@@ -4,7 +4,7 @@ from chroma import *
 from evaluate import *
 from keylab import *
 from key import *
-from markov import *
+from profile import *
 from nklang import *
 from util import *
 from s3 import *

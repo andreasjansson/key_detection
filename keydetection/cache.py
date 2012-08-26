@@ -4,21 +4,23 @@ import tempfile
 
 class Cache(object):
 
-    enabled = True
+    read_enabled = True
+    write_enabled = True
+    global_prefix = ''
 
     def __init__(self, prefix, key = ''):
-        self.name = '%s/cache_%s_%s.pkl' % (tempfile.gettempdir(), prefix, hashlib.md5(key).hexdigest())
+        self.name = '%s/cache_%s%s_%s.pkl' % (tempfile.gettempdir(), Cache.global_prefix, prefix, hashlib.md5(key).hexdigest())
         self._data = None
 
     def exists(self):
-        if not Cache.enabled:
+        if not Cache.read_enabled:
             False
 
         return self.get() is not None
 
     # handles broken pickle
     def get(self):
-        if not Cache.enabled:
+        if not Cache.read_enabled:
             return None
 
         if self._data is not None:
@@ -31,13 +33,20 @@ class Cache(object):
             return None
 
     def set(self, data):
-        #if not Cache.enabled:
-        #    return
+        if not Cache.write_enabled:
+            return
 
         with open(self.name, 'wb') as f:
             pickle.dump(data, f)
 
     @staticmethod
-    def set_caching_enabled(enabled):
-        Cache.enabled = enabled
+    def set_caching_read(enabled):
+        Cache.read_enabled = enabled
 
+    @staticmethod
+    def set_caching_write(enabled):
+        Cache.write_enabled = enabled
+
+    @staticmethod
+    def set_caching_prefix(prefix):
+        Cache.global_prefix = prefix

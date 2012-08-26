@@ -255,7 +255,7 @@ def get_test_matrix(mp3, time_limit = None):
     '''
 
     if time_limit:
-        cache = Cache('test_' + time_limit, mp3)
+        cache = Cache('test_%d' % time_limit, mp3)
     else:
         cache = Cache('test', mp3)
     if cache.exists():

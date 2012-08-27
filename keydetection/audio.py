@@ -221,7 +221,7 @@ def get_klangs(mp3 = None, audio = None, time_limit = None, n = 2):
     ts = tuner.tune(cs)
 
     logging.debug('Returning klangs')
-    klangs = [(i * winlength / float(fs), t.get_nklang(n = n)) for i, t in enumerate(ts)]
+    klangs = [(i * winlength / float(fs), t.get_nklang(n = n, filter_adjacent = False)) for i, t in enumerate(ts)]
     return klangs
 
 def generate_spectrogram(audio, window_size):

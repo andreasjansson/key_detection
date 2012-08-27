@@ -12,7 +12,6 @@ if __name__ == '__main__':
 
     remote = args.remote
     remote = re.sub('^https:\/\/s3\.amazonaws\.com/andreasjansson/', '', remote)
-    print remote
 
     tmp = s3_download('andreasjansson', remote)
     os.rename(tmp, args.local)

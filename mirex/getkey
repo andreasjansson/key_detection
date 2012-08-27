@@ -627,7 +627,7 @@ if __name__ == '__main__':
         model.append(Profile.from_values(values))
 
     try:
-        test_profile = get_test_profile(args.input)
+        test_profile = get_test_profile(args.input, time_limit = 30)
         key = get_key(model, test_profile)
     except Exception:
         sys.exit()

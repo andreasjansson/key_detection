@@ -626,8 +626,11 @@ if __name__ == '__main__':
     for values in values_list:
         model.append(Profile.from_values(values))
 
-    test_profile = get_test_profile(args.input)
-    key = get_key(model, test_profile)
+    try:
+        test_profile = get_test_profile(args.input)
+        key = get_key(model, test_profile)
+    except Exception:
+        sys.exit()
     line = '%s\n' % key.mirex_repr()
 
     if args.output == '-':

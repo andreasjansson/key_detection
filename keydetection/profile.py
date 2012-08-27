@@ -33,7 +33,7 @@ class Profile:
 
     def add(self, other):
         if self.length != other.length:
-            raise Error('Cannot add profiles of different shapes')
+            raise Exception('Cannot add profiles of different shapes')
         for i in range(self.length):
             self.values[i] += other.values[i]
 

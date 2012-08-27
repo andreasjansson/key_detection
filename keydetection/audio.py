@@ -50,11 +50,11 @@ class AudioReader(object):
     @staticmethod
     def for_filename(filename):
         extension = os.path.splitext(filename)[1]
-        if extension == 'wav':
+        if extension == '.wav':
             return WavReader()
-        if extension == 'mp3':
+        if extension == '.mp3':
             return Mp3Reader()
-        raise Error('Unknown audio file extension: %s' % extension)
+        raise Exception('Unknown audio file extension: %s' % extension)
 
 class WavReader(AudioReader):
 

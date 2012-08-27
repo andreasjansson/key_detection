@@ -79,4 +79,4 @@ def klang_number_to_name(number, n):
             names.append('%-2s' % note_names[number % 12])
             number /= 12
 
-        return ', '.join(reversed(names))
+        return ', '.join(names)

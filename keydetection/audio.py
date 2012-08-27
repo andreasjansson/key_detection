@@ -212,16 +212,17 @@ def get_klangs(mp3 = None, audio = None, time_limit = None, n = 2):
     # add the missing zeroes at the end to get the length right
     sf = map(lambda spectrum: spectrum + [0] * (winlength - upper_bound), sf)
 
-    bins = 5
+    bins = 1
     logging.debug('Getting chromagram')
     cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, max_fq)) for ss in sf]
 
-    logging.debug('Tuning')
-    tuner = Tuner(bins, global_tuning = True)
-    ts = tuner.tune(cs)
+    if bins > 1:
+        logging.debug('Tuning')
+        tuner = Tuner(bins, global_tuning = True)
+        ts = tuner.tune(cs)
 
     logging.debug('Returning klangs')
-    klangs = [(i * winlength / float(fs), t.get_nklang(n = n, filter_adjacent = False)) for i, t in enumerate(ts)]
+    klangs = [(i * winlength / float(fs), t.get_nklang(n = n)) for i, t in enumerate(ts)]
     return klangs
 
 def generate_spectrogram(audio, window_size):

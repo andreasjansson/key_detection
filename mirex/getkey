@@ -589,18 +589,17 @@ if __name__ == '__main__':
     model = []
     for values in values_list:
         model.append(Profile.from_values(values))
-
     try:
         test_profile = get_test_profile(args.input, time_limit = 30)
 
         if np.sum(test_profile.values) == 0:
             logging.warning('Silent audio file: %s' % (args.input))
-            sys.exit(1)
+            sys.exit(2)
         
         key = get_key(model, test_profile)
     except Exception as e:
         logging.warn('Failed to get key for %s: %s' % (args.input, e))
-        sys.exit(2)
+        sys.exit(1)
     line = '%s\n' % key.mirex_repr()
 
     if args.output == '-':

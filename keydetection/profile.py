@@ -20,7 +20,6 @@ class Profile:
     def from_values(values):
         profile = Profile()
         profile.values = values
-        print len(values)
         profile.length = len(values)
         return profile
 

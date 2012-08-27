@@ -244,18 +244,6 @@ def generate_spectrogram(audio, window_size):
         spectrum = spectrum[0:len(spectrum) / 2]
         yield (t, spectrum)
 
-def normalise_spectra(spectra):
-    '''
-    Normalise to 1.
-    '''
-    spectra = copy(spectra)
-    for i, spectrum in enumerate(spectra):
-        m = max(spectrum)
-        if m > 0:
-            spectrum = (np.array(spectrum) / max(spectrum)).tolist()
-        spectra[i] = spectrum
-    return spectra
-
 def downsample(sig, factor):
     '''
     Low-pass filter using simple FIR, then pick every n sample, where n is

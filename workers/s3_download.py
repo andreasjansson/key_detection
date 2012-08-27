@@ -11,7 +11,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     remote = args.remote
-    remote = re.sub('^https://s3\.amazonaws\.com/andreasjansson/', '', remote)
+    remote = re.sub('^https:\/\/s3\.amazonaws\.com/andreasjansson/', '', remote)
+    print remote
 
-    tmp = s3_download('andreasjansson', args.remote)
+    tmp = s3_download('andreasjansson', remote)
     os.rename(tmp, args.local)

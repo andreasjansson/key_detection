@@ -47,6 +47,15 @@ class AudioReader(object):
 
         return (samp_rate / downsample_factor, mono)
 
+    @staticmethod
+    def for_filename(filename):
+        extension = os.path.splitext(filename)[1]
+        if extension == 'wav':
+            return WavReader()
+        if extension == 'mp3':
+            return Mp3Reader()
+        raise Error('Unknown audio file extension: %s' % extension)
+
 class WavReader(AudioReader):
 
     def read(self, wav_filename, length = None, downsample_factor = 4):
@@ -178,9 +187,9 @@ class SpectrumGrainFilter(object):
         return filtspec
 
 
-def get_klangs(mp3 = None, audio = None, time_limit = None, n = 2):
+def get_klangs(audio_filename = None, audio = None, time_limit = None, n = 2):
     '''
-    Helper function that reads and pre-processes an mp3, computes the spectrogram,
+    Helper function that reads and pre-processes an mp3/wav, computes the spectrogram,
     filters each spectrum in the spectrogram, computes the chromagram for each spectrum,
     and for each chromagram, computes the nklang.    
     '''
@@ -189,9 +198,9 @@ def get_klangs(mp3 = None, audio = None, time_limit = None, n = 2):
 
     max_fq = 1000
 
-    if mp3:
-        logging.debug('Reading mp3')
-        _, audio = Mp3Reader().read(mp3)
+    if audio_filename:
+        logging.debug('Reading audio file')
+        _, audio = AudioReader.for_filename(audio_filename).read(audio_filename)
 
     if time_limit:
         audio = audio[: fs * time_limit] # first [time_limit] seconds

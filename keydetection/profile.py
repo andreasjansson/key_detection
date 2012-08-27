@@ -152,19 +152,19 @@ def get_training_profiles(mp3, keylab_file, n = 2):
 
     return profiles
 
-def get_test_profile(mp3, time_limit = None, n = 2):
+def get_test_profile(audio_filename, time_limit = None, n = 2):
     '''
-    Returns a single profile profile from an mp3.
+    Returns a single profile profile from an mp3/wav filename.
     '''
 
     if time_limit:
-        cache = Cache('test_%d' % time_limit, mp3)
+        cache = Cache('test_%d' % time_limit, audio_filename)
     else:
-        cache = Cache('test', mp3)
+        cache = Cache('test', audio_filename)
     if cache.exists():
         return cache.get()
 
-    klangs = get_klangs(mp3, time_limit = time_limit, n = n)
+    klangs = get_klangs(audio_filename, time_limit = time_limit, n = n)
     profile = Profile(12 ** n)
     for t, klang in klangs:
         if klang is not None and \
@@ -174,3 +174,13 @@ def get_test_profile(mp3, time_limit = None, n = 2):
     cache.set(profile)
 
     return profile
+
+def normalise_model(model, smoothing = True):
+    for profile in model:
+        msum = np.sum(profile.values)
+        if smoothing:
+            profile.add_constant(1) # laplace smoothing
+        if msum > 0: # normalise with sum from before smoothing, so that the smoothing constant is indeed constant
+            profile.values /= msum
+    return model
+

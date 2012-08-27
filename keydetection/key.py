@@ -54,6 +54,9 @@ class MajorKey(Key):
     def __repr__(self):
         return '<MajorKey: %s>' % util.note_names[self.root]
 
+    def mirex_repr(self):
+        return '%s\tmajor' % util.note_names[self.root]
+
     def compare(self, other):
         if isinstance(other, MinorKey) and \
                 (self.root - 3) % 12 == other.root:
@@ -64,6 +67,9 @@ class MinorKey(Key):
 
     def __repr__(self):
         return '<MinorKey: %s>' % util.note_names[self.root]
+
+    def mirex_repr(self):
+        return '%s\tminor' % util.note_names[self.root]
 
     def compare(self, other):
         if isinstance(other, MajorKey) and \

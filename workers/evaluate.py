@@ -31,11 +31,7 @@ def evaluate(filenames_file, models_dir):
     with open('/tmp/aggregate.pkl', 'wb') as f:
         pickle.dump(model, f)
 
-    for profile in model:
-        psum = np.sum(profile.values)
-        profile.add_constant(1) # laplace smoothing
-        if psum > 0: # normalise with sum from before smoothing, so that the smoothing constant is indeed constant
-            profile.values /= psum
+    normalise_model(model)
 
     scoreboard = Scoreboard()
     for mp3_file, lab_file in filenames:
@@ -53,7 +49,7 @@ def evaluate(filenames_file, models_dir):
             continue
 
         try:
-            test_profile = get_test_profile(mp3_file, time_limit = 30, n = 3)
+            test_profile = get_test_profile(mp3_file, time_limit = 30, n = 2)
 
             if np.sum(test_profile.values) == 0:
                 logging.warning('Silent mp3: %s' % (mp3_file))

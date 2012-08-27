@@ -195,7 +195,6 @@ def get_klangs(audio_filename = None, audio = None, time_limit = None, n = 2):
     '''
     fs = 11025
     winlength = 4096
-
     max_fq = 1000
 
     if audio_filename:
@@ -212,18 +211,18 @@ def get_klangs(audio_filename = None, audio = None, time_limit = None, n = 2):
 
     upper_bound = int(math.ceil(winlength * max_fq / (fs / 2)))
 
-    filt = SpectrumQuantileFilter(98, 100, upper_bound = upper_bound)
-    sf = map(filt.filter, s)
+    #filt = SpectrumQuantileFilter(98, 100, upper_bound = upper_bound)
+    #s = map(filt.filter, s)
 
     filt = SpectrumGrainFilter(upper_bound)
-    sf = map(filt.filter, sf)
+    s = map(filt.filter, s)
 
     # add the missing zeroes at the end to get the length right
-    sf = map(lambda spectrum: spectrum + [0] * (winlength - upper_bound), sf)
+    s = map(lambda spectrum: spectrum + [0] * (winlength - upper_bound), s)
 
     bins = 1
     logging.debug('Getting chromagram')
-    cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, max_fq)) for ss in sf]
+    cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, max_fq)) for ss in s]
 
     if bins > 1:
         logging.debug('Tuning')

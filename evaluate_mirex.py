@@ -3,6 +3,8 @@ import argparse
 
 from keydetection import *
 
+logging.basicConfig(level = logging.DEBUG)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'evaluate mirex output')
     parser.add_argument('mirex')
@@ -28,6 +30,10 @@ if __name__ == '__main__':
             match = re.search(r'lilymp3/(.+)::([A-G]\#?)\t(minor|major)', line)
             if match:
                 basename, root, mode = match.groups()
+
+                if basename not in truth:
+                    continue
+
                 if mode == 'major':
                     key = MajorKey(note_names.index(root))
                 else:

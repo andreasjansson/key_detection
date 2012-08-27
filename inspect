@@ -21,4 +21,11 @@ if __name__ == '__main__':
         model = get_pitch_class_model()
     else:
         model = pickle.load(open(args.model))
+
+    if not isinstance(model[0], Profile):
+        values_list = model
+        model = []
+        for values in values_list:
+            model.append(Profile.from_values(values))
+
     summarise(model, args.limit)

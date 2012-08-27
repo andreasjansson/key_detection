@@ -574,10 +574,10 @@ def get_key(model, test_profile):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'MIREX-formatted key detection')
-    parser.add_argument('-m', '--model', default = 'model.pkl')
-    parser.add_argument('-v', '--verbose', action = 'store_true', default = False)
     parser.add_argument('-i', '--input', required = True, help = 'Wav filename')
-    parser.add_argument('-o', '--output', required = True, help = 'Output filename')
+    parser.add_argument('-o', '--output', required = True, help = 'Output filename (or - for stdout)')
+    parser.add_argument('-m', '--model', default = 'model.pkl', help = 'The trained, pickled model (defaults to model.pkl)')
+    parser.add_argument('-v', '--verbose', action = 'store_true', default = False, help = 'Enable verbose logging')
     args = parser.parse_args()
 
     if args.verbose:

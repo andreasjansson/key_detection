@@ -76,7 +76,6 @@ class WavReader(AudioReader):
         return (samp_rate, stereo)
 
 
-
 class Mp3Reader(AudioReader):
 
     def read(self, mp3_filename, length = None, downsample_factor = 4):
@@ -317,56 +316,6 @@ class Chromagram(object):
             notes = map(operator.itemgetter(0), note_amps)
 
         return Anyklang(notes, n)
-
-class Tuner(object):
-    '''
-    Tune an n*x bin chromagram to an n bin chromagram.
-    '''
-
-    def __init__(self, bins_per_pitch, pitches = 12, global_tuning = True):
-        self.bins_per_pitch = bins_per_pitch
-        self.pitches = pitches
-        self.global_tuning = global_tuning
-
-    def tune(self, chromas):
-        tuned_chromas = []
-
-        if self.global_tuning:
-            max_bins = [0] * self.bins_per_pitch
-            for chroma in chromas:
-                max_bins[self.get_max_bin(chroma)] += 1
-            max_bin = max_bins.index(max(max_bins))
-
-        for chroma in chromas:
-            if not self.global_tuning:
-                max_bin = self.get_max_bin(chroma)
-
-            tuned_chroma = self.tune_chroma(chroma, max_bin)
-            tuned_chromas.append(tuned_chroma)
-
-        return tuned_chromas
-
-    def get_max_bin(self, chroma):
-        bins = [0] * self.bins_per_pitch
-        for i, value in enumerate(chroma.values):
-            bins[i % self.bins_per_pitch] += value
-        return bins.index(max(bins))
-
-    def tune_chroma(self, chroma, max_bin):
-        values = self.roll_values(chroma.values, max_bin)
-        tuned_values = [0] * self.pitches
-        for i, value in enumerate(values):
-            tuned_values[int(math.floor(i / self.bins_per_pitch))] += value
-        return Chromagram(tuned_values)
-
-    def roll_values(self, values, max_bin):
-        mid = math.floor(self.bins_per_pitch / 2)
-        if max_bin <= mid:
-            shift = mid - max_bin
-        else:
-            shift = max_bin
-        values = np.roll(values, int(shift)).tolist()
-        return values
 
 class Key(object):
     '''

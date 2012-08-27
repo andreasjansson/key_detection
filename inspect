@@ -6,9 +6,9 @@ import pickle
 from keydetection import *
 
 def summarise(model, limit = None):
-    print 'C major matrix:'
+    print 'C major profile:'
     model[0].print_summary(limit)
-    print '\nC minor matrix:'
+    print '\nC minor profile:'
     model[12].print_summary(limit)
 
 if __name__ == '__main__':

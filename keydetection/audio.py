@@ -220,7 +220,7 @@ def get_klangs(mp3 = None, audio = None, time_limit = None, n = 2):
     tuner = Tuner(bins, global_tuning = True)
     ts = tuner.tune(cs)
 
-    logging.debug('Returning klags')
+    logging.debug('Returning klangs')
     klangs = [(i * winlength / float(fs), t.get_nklang(n = n)) for i, t in enumerate(ts)]
     return klangs
 

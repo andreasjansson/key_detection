@@ -66,17 +66,17 @@ class Anyklang(object):
 
 
 
-def klang_number_to_name(number):
+def klang_number_to_name(number, n):
     '''
-    Helper that returns the name of a Zweiklang.
+    Helper that returns the name of an nklang.
     '''
     if number == -1:
         return 'Silence'
     else:
-        first = number % 12
-        second = int(math.floor(number / 12))
-        if first == second:
-            return note_names[first]
-        else:
-            return note_names[first] + ', ' + note_names[second]
 
+        names = []
+        for i in range(n):
+            names.append('%-2s' % note_names[number % 12])
+            number /= 12
+
+        return ', '.join(names)

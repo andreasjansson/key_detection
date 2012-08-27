@@ -88,13 +88,13 @@ class Chromagram(object):
         if filter_adjacent:
             note_amps.sort(key = operator.itemgetter(1))
             all_amps = [0] * 12
-            for n, a in note_amps:
-                all_amps[n] = a
+            for note, a in note_amps:
+                all_amps[note] = a
 
             notes = []
-            for n, a in note_amps:
-                if all_amps[(n - 1) % 12] < a and all_amps[(n + 1) % 12] < a:
-                    notes.append(n)
+            for note, a in note_amps:
+                if all_amps[(note - 1) % 12] < a and all_amps[(note + 1) % 12] < a:
+                    notes.append(note)
 
         else:
             notes = map(operator.itemgetter(0), note_amps)

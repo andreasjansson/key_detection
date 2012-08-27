@@ -195,7 +195,7 @@ def get_klangs(audio_filename = None, audio = None, time_limit = None, n = 2):
     '''
     fs = 11025
     winlength = 4096
-    max_fq = 800
+    max_fq = 600
 
     if audio_filename:
         logging.debug('Reading audio file')

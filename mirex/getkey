@@ -629,5 +629,11 @@ if __name__ == '__main__':
     model = normalise_model(model, True)
     test_profile = get_test_profile(args.input)
     key = get_key(model, test_profile)
-    with open(args.output, 'w') as f:
-        f.write('%s\n' % key.mirex_repr())
+    line = '%s\n' % key.mirex_repr()
+
+    if args.output == '-':
+        print line
+
+    else:
+        with open(args.output, 'w') as f:
+            f.write(line)

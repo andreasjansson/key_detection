@@ -626,7 +626,6 @@ if __name__ == '__main__':
     for values in values_list:
         model.append(Profile.from_values(values))
 
-    model = normalise_model(model, True)
     test_profile = get_test_profile(args.input)
     key = get_key(model, test_profile)
     line = '%s\n' % key.mirex_repr()

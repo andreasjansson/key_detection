@@ -592,9 +592,15 @@ if __name__ == '__main__':
 
     try:
         test_profile = get_test_profile(args.input, time_limit = 30)
+
+        if np.sum(test_profile.values) == 0:
+            logging.warning('Silent audio file: %s' % (args.input))
+            sys.exit(1)
+        
         key = get_key(model, test_profile)
-    except Exception:
-        sys.exit()
+    except Exception e:
+        logging.warn('Failed to get key for %s: %s' % (args.input, e))
+        sys.exit(2)
     line = '%s\n' % key.mirex_repr()
 
     if args.output == '-':

@@ -598,7 +598,7 @@ if __name__ == '__main__':
             sys.exit(1)
         
         key = get_key(model, test_profile)
-    except Exception e:
+    except Exception as e:
         logging.warn('Failed to get key for %s: %s' % (args.input, e))
         sys.exit(2)
     line = '%s\n' % key.mirex_repr()

@@ -108,33 +108,6 @@ class Mp3Reader(AudioReader):
         if not os.path.exists(wav_filename):
             raise IOError('Failed to create wav file')
 
-class SpectrumQuantileFilter(object):
-    '''
-    A really crude spectral peak detector / filter that works by splitting the spectrum
-    into fixed size windows and setting all spectral bins that have an amplitude
-    below a certain amplitude quantile for that window to 0.
-    '''
-
-    def __init__(self, quantile = 99, window_width = 200, upper_bound = None):
-        self.quantile = quantile
-        self.window_width = window_width
-        self.upper_bound = upper_bound
-
-    def filter(self, spectrum):
-        if self.upper_bound:
-            spectrum = spectrum[:self.upper_bound]
-
-        filtered = []
-        for i in range(0, len(spectrum), self.window_width):
-            subspec = list(spectrum[i:(i + self.window_width)])
-            sortspec = [(i, v) for i, v in enumerate(subspec)]
-            sortspec.sort(key = operator.itemgetter(1))
-            q = int(len(sortspec) * (self.quantile / 100.0))
-            for i in range(q):
-                subspec[sortspec[i][0]] = 0
-            filtered += subspec
-        return filtered
-
 class SpectrumGrainFilter(object):
     '''
     Imagine a line plot of a spectrum, but upside down. Now place tiny grains of
@@ -213,23 +186,14 @@ def get_klangs(audio_filename = None, audio = None, time_limit = None, n = 2):
 
     upper_bound = int(math.ceil(winlength * max_fq / (fs / 2)))
 
-    #filt = SpectrumQuantileFilter(98, 100, upper_bound = upper_bound)
-    #s = map(filt.filter, s)
-
     filt = SpectrumGrainFilter(upper_bound)
     s = map(filt.filter, s)
 
     # add the missing zeroes at the end to get the length right
     s = map(lambda spectrum: spectrum + [0] * (winlength - upper_bound), s)
 
-    bins = 1
     logging.debug('Getting chromagram')
-    cs = [Chromagram.from_spectrum(ss, fs, 12 * bins, (20, max_fq)) for ss in s]
-
-    if bins > 1:
-        logging.debug('Tuning')
-        tuner = Tuner(bins, global_tuning = True)
-        cs = tuner.tune(cs)
+    cs = [Chromagram.from_spectrum(ss, fs, 12, (20, max_fq)) for ss in s]
 
     logging.debug('Returning klangs')
     klangs = [(i * winlength / float(fs), t.get_nklang(n = n)) for i, t in enumerate(cs)]

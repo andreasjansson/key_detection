@@ -15,7 +15,7 @@ def train(filenames_file, model_filename, local_model = False):
         for line in f.readlines():
             filenames.append(line.split('::'))
 
-    model = get_trained_model(filenames, n = 2)
+    model = get_trained_model(filenames, n = 3)
     model_local_filename = '/tmp/model.pkl'
     with open(model_local_filename, 'wb') as f:
         pickle.dump(model, f)

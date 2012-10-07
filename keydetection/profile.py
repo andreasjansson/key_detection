@@ -65,7 +65,7 @@ class Profile:
         i = 0
         lines = 0
         n = self.get_n()
-        while(seq[i] > 0 and i < len(seq)):
+        while(i < len(seq) and seq[i] > 0):
             where = np.where(seq[i] == self.values)[0]
             for index in where:
                 print '%-6s: %.3f' % (klang_number_to_name(index, n), seq[i])

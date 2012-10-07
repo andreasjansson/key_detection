@@ -49,7 +49,7 @@ def evaluate(filenames_file, models_dir):
             continue
 
         try:
-            test_profile = get_test_profile(mp3_file, time_limit = 30, n = 1)
+            test_profile = get_test_profile(mp3_file, time_limit = 30, n = 4)
             #test_profile = get_test_profile(mp3_file, n = 2)
 
             if np.sum(test_profile.values) == 0:

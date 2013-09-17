@@ -8,7 +8,6 @@ import os
 import sys
 import os.path
 from StringIO import StringIO
-import matplotlib.pyplot as plt
 import logging
 
 from util import *

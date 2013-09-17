@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# for d in ~/data/bach10/0*; do echo $(basename $d); python getkey.py -t -i $d/$(basename $d).wav -o ~/scratch/key_transitions/$(basename $d).csv -t -m model.pkl; echo; done
+
 from StringIO import StringIO
 from copy import copy
 import argparse
@@ -348,7 +350,7 @@ class Key(object):
 class MajorKey(Key):
 
     def __repr__(self):
-        return '<MajorKey: %s>' % note_names[self.root]
+        return '%s major' % note_names[self.root]
 
     def mirex_repr(self):
         return '%s\tmajor' % note_names[self.root]
@@ -356,7 +358,7 @@ class MajorKey(Key):
 class MinorKey(Key):
 
     def __repr__(self):
-        return '<MinorKey: %s>' % note_names[self.root]
+        return '%s minor' % note_names[self.root]
 
     def mirex_repr(self):
         return '%s\tminor' % note_names[self.root]
@@ -411,6 +413,11 @@ class Anyklang(object):
 
     def get_number(self):
         return np.dot(np.array(self.notes), (12 ** np.arange(len(self.notes))))
+
+    def get_profile(self):
+        p = Profile(12 ** len(self.notes))
+        p.increment(self)
+        return p
 
     def transpose(self, delta):
         transposed_notes = map(lambda n: (n + delta) % 12, self.original_notes)
@@ -476,12 +483,12 @@ class Profile:
         return '<Profile length %s, sum %f>' % (self.length, np.sum(self.values))
 
 
-def get_test_profile(audio_filename, time_limit = None, n = 2):
+def get_test_profile(audio_filename, time_limit=None, n=2):
     '''
     Returns a single profile profile from an mp3/wav filename.
     '''
 
-    klangs = get_klangs(audio_filename, time_limit = time_limit, n = n)
+    klangs = get_klangs(audio_filename, time_limit=time_limit, n=n)
     profile = Profile(12 ** n)
     for t, klang in klangs:
         if klang is not None and \
@@ -490,14 +497,111 @@ def get_test_profile(audio_filename, time_limit = None, n = 2):
 
     return profile
 
-def get_costs(klangs, model):
-    costs = np.zeros((len(klangs)))
+def get_profile_similarities(klangs, model):
+    sims = np.zeros((len(model), len(klangs)))
+    for i, profile in enumerate(model):
+        for j, (t, klang) in enumerate(klangs):
+            sims[i, j] = profile.similarity(klang.get_profile())
+    return sims
 
-def get_key_transitions(audio_filename, model, time_limit = None, n = 2):
-    klangs = get_klangs(audio_filename, time_limit = time_limit, n = n)
-    costs = get_costs(klangs, model)
+def time_keys(klangs, model):
+    scores = np.zeros((len(klangs), len(klangs), len(model)))
+    for p, profile in enumerate(model):
+        for i, (t, klang) in enumerate(klangs):
+            inner_profile = Profile(12 ** 2)
+            for j in range(i, len(klangs)):
+                inner_profile.increment(klangs[j][1])
+                scores[i, j, p] = profile.similarity(inner_profile) / (j - i + 1)
+    return scores
 
-def normalise_model(model, smoothing = True):
+def moving_average(klangs, model, w=20):
+    scores = np.zeros((len(model), len(klangs) - w))
+    for p, profile in enumerate(model):
+        for i, (t, klang) in enumerate(klangs[:-w]):
+            inner_profile = Profile(12 ** 2)
+            for j in range(i, i + w):
+                inner_profile.increment(klangs[j][1])
+            scores[p, i] = profile.similarity(inner_profile) / w
+    return scores
+
+def find_best_path(values, change_cost=1.007):
+    values = np.max(values) - values
+    costs = np.zeros(values.shape)
+    prev = np.zeros(values.shape)
+
+    costs[:, 0] = values[:, 0]
+
+    for i in range(1, costs.shape[1]):
+        for p1 in range(costs.shape[0]):
+
+            min_cost = float('+inf')
+
+            for p2 in range(costs.shape[0]):
+                cost = costs[p2, i - 1] + values[p1, i]
+                if p1 != p2:
+                    cost *= change_cost
+                if cost < min_cost:
+                    min_cost = cost
+                    min_p = p2
+
+            costs[p1, i] = min_cost
+            prev[p1, i] = min_p
+
+    path = [0] * values.shape[1]
+    path[-1] = np.argmin(costs[:, -1])
+
+    for i in reversed(range(len(path) - 1)):
+        path[i] = prev[path[i + 1], i]
+
+    return path
+
+def get_keys_for_path(path, klangs):
+    keys = []
+    for i in range(len(path)):
+        n = int(path[i])
+        # TODO: this is a hack because the first key was always c (bug)
+        if i != 0 and path[i] != path[i - 1]:
+            if n > 12:
+                key = MinorKey(n - 12)
+            else:
+                key = MajorKey(n)
+            keys.append((klangs[i][0], key))
+    return keys
+
+def postprocess_keytimes(keytimes, window):
+    fs = 11025.0
+    w = 4096.0
+
+    postprocessed = {}
+    for i, (time, key) in enumerate(keytimes):
+        if len(postprocessed) == 0:
+            time = 0
+        else:
+            time = int(round(time + (window / 2) * (w / fs)))
+        postprocessed[time] = key
+
+    postprocessed = sorted([tuple(x) for x in postprocessed.items()])
+
+    keytimes = []
+    for i in range(len(postprocessed) - 1):
+        if postprocessed[i][1] != postprocessed[i + 1][1]:
+            keytimes.append(postprocessed[i])
+
+    keytimes.append(postprocessed[-1])
+
+    return keytimes
+
+def get_key_transitions(audio_filename, model, time_limit=None, n=2):
+    klangs = get_klangs(audio_filename, time_limit=time_limit, n=n)
+    window = 15
+    scores = moving_average(klangs, model, window)
+    path = find_best_path(scores)
+    keytimes = get_keys_for_path(path, klangs)
+    keytimes = np.array(keytimes)
+    keytimes = postprocess_keytimes(keytimes, window)
+    return keytimes
+
+def normalise_model(model, smoothing=True):
     for profile in model:
         msum = np.sum(profile.values)
         if smoothing:
@@ -527,7 +631,13 @@ def get_key(model, test_profile):
     else:
         return MinorKey(argmax - 12)
 
-
+def load_model(model_filename):
+    with open(model_filename, 'rb') as f:
+        values_list = pickle.load(f)
+    model = []
+    for values in values_list:
+        model.append(Profile.from_values(values))
+    return model
 
 
 if __name__ == '__main__':
@@ -535,34 +645,38 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--input', required = True, help = 'Wav filename')
     parser.add_argument('-o', '--output', required = True, help = 'Output filename (or - for stdout)')
     parser.add_argument('-m', '--model', default = 'model.pkl', help = 'The trained, pickled model (defaults to model.pkl)')
+    parser.add_argument('-t', '--transitions', action='store_true', default=False)
     parser.add_argument('-v', '--verbose', action = 'store_true', default = False, help = 'Enable verbose logging')
     args = parser.parse_args()
 
     if args.verbose:
         logging.basicConfig(level = logging.DEBUG)
 
-    with open(args.model, 'rb') as f:
-        values_list = pickle.load(f)
+    model = load_model(args.model)
 
-    model = []
-    for values in values_list:
-        model.append(Profile.from_values(values))
-    try:
-        test_profile = get_test_profile(args.input, time_limit = 30)
-
-        if np.sum(test_profile.values) == 0:
-            logging.warning('Silent audio file: %s' % (args.input))
-            sys.exit(2)
-        
-        key = get_key(model, test_profile)
-    except Exception as e:
-        logging.warn('Failed to get key for %s: %s' % (args.input, e))
-        sys.exit(1)
-    line = '%s\n' % key.mirex_repr()
-
-    if args.output == '-':
-        print line
+    if args.transitions:
+        keytimes = get_key_transitions(args.input, model)
+        if args.output == '-':
+            args.output = '/dev/stdout'
+        np.savetxt(args.output, keytimes, fmt='%d,%s')
 
     else:
-        with open(args.output, 'w') as f:
-            f.write(line)
+        try:
+            test_profile = get_test_profile(args.input, time_limit = 30)
+
+            if np.sum(test_profile.values) == 0:
+                logging.warning('Silent audio file: %s' % (args.input))
+                sys.exit(2)
+
+            key = get_key(model, test_profile)
+        except Exception as e:
+            logging.warn('Failed to get key for %s: %s' % (args.input, e))
+            sys.exit(1)
+        line = '%s\n' % key.mirex_repr()
+
+        if args.output == '-':
+            print line
+
+        else:
+            with open(args.output, 'w') as f:
+                f.write(line)
